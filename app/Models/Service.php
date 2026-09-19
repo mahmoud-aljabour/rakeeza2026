@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Scopes\ActiveScope;
 use App\Support\PublicImage;
+use App\Support\TranslatesCatalog;
 use Database\Factories\ServiceFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['title', 'description', 'image_path', 'is_active'])]
+#[Fillable(['title', 'title_en', 'description', 'description_en', 'image_path', 'is_active', 'projects_count'])]
 #[ScopedBy([ActiveScope::class])]
 class Service extends Model
 {
@@ -51,6 +52,24 @@ class Service extends Model
         return PublicImage::url($this->image_path);
     }
 
+    public function displayTitle(): string
+    {
+        return TranslatesCatalog::text(
+            'catalog.services.'.$this->title.'.title',
+            $this->title,
+            $this->title_en,
+        );
+    }
+
+    public function displayDescription(): string
+    {
+        return TranslatesCatalog::text(
+            'catalog.services.'.$this->title.'.description',
+            (string) $this->description,
+            $this->description_en,
+        );
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -58,6 +77,7 @@ class Service extends Model
     {
         return [
             'is_active' => 'boolean',
+            'projects_count' => 'integer',
         ];
     }
 

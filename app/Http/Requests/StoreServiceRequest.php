@@ -21,7 +21,10 @@ final class StoreServiceRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'description_en' => ['nullable', 'string'],
+            'projects_count' => ['nullable', 'integer', 'min:0', 'max:99999'],
             'is_active' => ['sometimes', 'boolean'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'image_url' => ['nullable', 'string', 'max:2048'],
@@ -56,6 +59,13 @@ final class StoreServiceRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        if ($this->has('projects_count')) {
+            $count = $this->input('projects_count');
+            $this->merge([
+                'projects_count' => ($count === '' || $count === null) ? 0 : (int) $count,
+            ]);
+        }
+
         if ($this->has('is_active')) {
             $this->merge([
                 'is_active' => filter_var($this->input('is_active'), FILTER_VALIDATE_BOOLEAN),

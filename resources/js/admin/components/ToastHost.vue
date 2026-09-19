@@ -1,7 +1,9 @@
 <script setup>
 import { useToast } from '../composables/useToast';
+import { useLocale } from '../composables/useLocale';
 
 const { toasts, dismiss } = useToast();
+const { t } = useLocale();
 
 function icon(type) {
     return type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation';
@@ -20,7 +22,7 @@ function icon(type) {
             >
                 <i class="fa-solid mt-0.5" :class="icon(toast.type)"></i>
                 <p class="flex-1 leading-6">{{ toast.text }}</p>
-                <button type="button" class="mt-0.5 text-white/80 hover:text-white" aria-label="إغلاق" @click="dismiss(toast.id)">
+                <button type="button" class="mt-0.5 text-white/80 hover:text-white" :aria-label="t('close')" @click="dismiss(toast.id)">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>

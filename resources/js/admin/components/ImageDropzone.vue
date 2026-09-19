@@ -1,5 +1,8 @@
 <script setup>
 import { ref } from 'vue';
+import { useLocale } from '../composables/useLocale';
+
+const { t } = useLocale();
 
 const props = defineProps({
     preview: {
@@ -78,13 +81,13 @@ function onDrop(event) {
             <span>
                 <span class="block text-sm font-extrabold">
                     {{ multiple
-                        ? 'اضغط لإضافة صور'
-                        : (preview ? 'اضغط لتغيير الصورة' : 'اضغط هنا لرفع الصورة') }}
+                        ? t('common.drop_add')
+                        : (preview ? t('common.drop_change') : t('common.drop_upload')) }}
                 </span>
                 <span class="mt-1 block text-xs font-bold opacity-75">
                     {{ multiple
-                        ? 'يمكنك اختيار أكثر من صورة — JPG, PNG, WEBP'
-                        : 'أو اسحب الصورة وأفلتها هنا — JPG, PNG, WEBP' }}
+                        ? t('common.drop_multi_hint')
+                        : t('common.drop_hint') }}
                 </span>
             </span>
         </span>

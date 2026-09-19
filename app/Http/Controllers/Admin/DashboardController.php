@@ -22,6 +22,8 @@ final class DashboardController extends Controller
             'projects' => Project::query()->count(),
             'leads' => $leads->counts(),
             'craftsmen' => $craftsmen->counts(),
+            'recent_leads' => $leads->latest(),
+            'recent_craftsmen' => $craftsmen->latest(),
         ]);
     }
 }

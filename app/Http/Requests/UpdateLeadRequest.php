@@ -22,6 +22,16 @@ final class UpdateLeadRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::enum(LeadStatus::class)],
+            'note' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('note')) {
+            $this->merge([
+                'note' => trim((string) $this->input('note')),
+            ]);
+        }
     }
 }

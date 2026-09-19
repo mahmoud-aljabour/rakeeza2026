@@ -27,12 +27,13 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function (): void {
     Route::post('projects/{project}', [ProjectController::class, 'update']);
 
     Route::get('leads', [LeadController::class, 'index']);
+    Route::post('leads', [LeadController::class, 'store']);
+    Route::get('leads/export', [LeadController::class, 'export']);
     Route::patch('leads/{lead}', [LeadController::class, 'update']);
     Route::delete('leads/{lead}', [LeadController::class, 'destroy']);
 
     Route::get('craftsmen', [CraftsmanController::class, 'index']);
     Route::get('craftsmen/export', [CraftsmanController::class, 'export']);
-    Route::get('craftsmen/{craftsman}/export', [CraftsmanController::class, 'exportOne']);
     Route::patch('craftsmen/{craftsman}', [CraftsmanController::class, 'update']);
     Route::delete('craftsmen/{craftsman}', [CraftsmanController::class, 'destroy']);
 });

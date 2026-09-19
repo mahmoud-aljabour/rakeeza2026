@@ -13,6 +13,11 @@ final class SettingService
     private const CACHE_KEY = 'rakeeza.settings';
 
     /**
+     * @var list<string>
+     */
+    private const CONTACT_KEYS = ['phone', 'email', 'whatsapp'];
+
+    /**
      * @return Collection<int, Setting>
      */
     public function list(): Collection
@@ -80,8 +85,18 @@ final class SettingService
         $defaults = config('rakeeza.defaults');
         $saved = $this->allAsArray();
         $site = [];
+        $useEnglishCopy = app()->getLocale() === 'en';
 
         foreach ($defaults as $key => $default) {
+            if ($useEnglishCopy && ! in_array($key, self::CONTACT_KEYS, true)) {
+                $translated = trans('content.'.$key);
+                $site[$key] = is_string($translated) && $translated !== 'content.'.$key
+                    ? $translated
+                    : $default;
+
+                continue;
+            }
+
             $value = $saved[$key] ?? $default;
             $site[$key] = is_string($value) && $value !== '' ? $value : $default;
         }

@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Scopes\ActiveScope;
 use App\Support\PublicImage;
+use App\Support\TranslatesCatalog;
 use Database\Factories\ProjectFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['title', 'details', 'image_path', 'image_paths', 'order_column', 'service_id'])]
+#[Fillable(['title', 'title_en', 'details', 'details_en', 'image_path', 'image_paths', 'order_column', 'service_id'])]
 class Project extends Model
 {
     /** @use HasFactory<ProjectFactory> */
@@ -69,6 +70,24 @@ class Project extends Model
         return PublicImage::url($this->storedImagePaths()[0] ?? $this->image_path);
     }
 
+    public function displayTitle(): string
+    {
+        return TranslatesCatalog::text(
+            'catalog.projects.'.$this->title.'.title',
+            $this->title,
+            $this->title_en,
+        );
+    }
+
+    public function displayDetails(): string
+    {
+        return TranslatesCatalog::text(
+            'catalog.projects.'.$this->title.'.details',
+            (string) $this->details,
+            $this->details_en,
+        );
+    }
+
     /**
      * @return array{title: string, details: string, images: list<string>}
      */
@@ -77,8 +96,8 @@ class Project extends Model
         $images = $this->imageUrls();
 
         return [
-            'title' => $this->title,
-            'details' => $this->details ?? '',
+            'title' => $this->displayTitle(),
+            'details' => $this->displayDetails(),
             'images' => $images !== [] ? $images : [$this->imageUrl()],
         ];
     }

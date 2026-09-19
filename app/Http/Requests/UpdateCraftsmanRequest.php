@@ -22,6 +22,16 @@ final class UpdateCraftsmanRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::enum(CraftsmanStatus::class)],
+            'note' => ['nullable', 'string', 'max:2000'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('note')) {
+            $this->merge([
+                'note' => trim((string) $this->input('note')),
+            ]);
+        }
     }
 }

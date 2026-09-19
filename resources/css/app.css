@@ -14,12 +14,44 @@
     --color-primary-dark: #062038;
     --color-accent: #f26522;
     --color-accent-hover: #d95316;
+    --breakpoint-sm: 40.0625rem; /* 641px — tablet */
+    --breakpoint-lg: 64.0625rem; /* 1025px — desktop */
 }
 
 html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
 }
 
 body {
     font-family: var(--font-sans);
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+img,
+video,
+svg {
+    max-width: 100%;
+}
+
+.admin-table-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-gutter: stable;
+}
+
+.admin-table-scroll::-webkit-scrollbar {
+    height: 10px;
+}
+
+.admin-table-scroll::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.admin-table-scroll::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 999px;
 }

@@ -1,61 +1,63 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import axios from 'axios';
 import { useApiError } from '../../composables/useApiError';
 import { useToast } from '../../composables/useToast';
+import { useLocale } from '../../composables/useLocale';
 
 const { message } = useApiError();
 const toast = useToast();
+const { t } = useLocale();
 const tab = ref('contact');
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
 const form = reactive({});
 
-const tabs = [
-    { id: 'contact', label: 'بيانات التواصل' },
-    { id: 'hero', label: 'الهيرو ومن نحن' },
-    { id: 'more', label: 'الحرفيين ولماذا ركيزة' },
-];
+const tabs = computed(() => [
+    { id: 'contact', label: t('settings.tab_contact') },
+    { id: 'hero', label: t('settings.tab_hero') },
+    { id: 'more', label: t('settings.tab_more') },
+]);
 
-const groups = {
+const groups = computed(() => ({
     contact: [
-        { key: 'phone', label: 'الهاتف' },
-        { key: 'email', label: 'البريد الإلكتروني' },
-        { key: 'whatsapp', label: 'واتساب (بدون +)' },
-        { key: 'hours', label: 'ساعات العمل' },
-        { key: 'contact_intro', label: 'مقدمة قسم اتصل بنا', type: 'textarea' },
-        { key: 'footer_about', label: 'نص الفوتر', type: 'textarea' },
+        { key: 'phone', label: t('settings.phone') },
+        { key: 'email', label: t('settings.email') },
+        { key: 'whatsapp', label: t('settings.whatsapp') },
+        { key: 'hours', label: t('settings.hours') },
+        { key: 'contact_intro', label: t('settings.contact_intro'), type: 'textarea' },
+        { key: 'footer_about', label: t('settings.footer_about'), type: 'textarea' },
     ],
     hero: [
-        { key: 'hero_kicker', label: 'كلمة الهيرو العلوية' },
-        { key: 'hero_title', label: 'عنوان الهيرو' },
-        { key: 'hero_highlight', label: 'الكلمة المميزة في العنوان' },
-        { key: 'hero_text', label: 'وصف الهيرو', type: 'textarea' },
-        { key: 'about_text', label: 'نص من نحن', type: 'textarea' },
-        { key: 'about_highlight_1', label: 'نقطة تميز 1' },
-        { key: 'about_highlight_2', label: 'نقطة تميز 2' },
-        { key: 'vision_text', label: 'نص الرؤية', type: 'textarea' },
+        { key: 'hero_kicker', label: t('settings.hero_kicker') },
+        { key: 'hero_title', label: t('settings.hero_title') },
+        { key: 'hero_highlight', label: t('settings.hero_highlight') },
+        { key: 'hero_text', label: t('settings.hero_text'), type: 'textarea' },
+        { key: 'about_text', label: t('settings.about_text'), type: 'textarea' },
+        { key: 'about_highlight_1', label: t('settings.about_highlight_1') },
+        { key: 'about_highlight_2', label: t('settings.about_highlight_2') },
+        { key: 'vision_text', label: t('settings.vision_text'), type: 'textarea' },
     ],
     more: [
-        { key: 'craftsman_kicker', label: 'عنوان قسم الحرفي الصغير' },
-        { key: 'craftsman_title', label: 'عنوان قسم الحرفي' },
-        { key: 'craftsman_text', label: 'وصف قسم الحرفي', type: 'textarea' },
-        { key: 'craftsman_feature_1', label: 'ميزة الحرفي 1' },
-        { key: 'craftsman_feature_2', label: 'ميزة الحرفي 2' },
-        { key: 'why_kicker', label: 'عنوان لماذا ركيزة الصغير' },
-        { key: 'why_title', label: 'عنوان لماذا ركيزة' },
-        { key: 'why_lead', label: 'وصف لماذا ركيزة', type: 'textarea' },
-        { key: 'why_item_1', label: 'سبب 1' },
-        { key: 'why_item_2', label: 'سبب 2' },
-        { key: 'why_item_3', label: 'سبب 3' },
-        { key: 'why_item_4', label: 'سبب 4' },
-        { key: 'why_item_5', label: 'سبب 5' },
-        { key: 'why_item_6', label: 'سبب 6' },
-        { key: 'why_caption_title', label: 'عنوان صورة لماذا ركيزة' },
-        { key: 'why_caption_text', label: 'وصف صورة لماذا ركيزة' },
+        { key: 'craftsman_kicker', label: t('settings.craftsman_kicker') },
+        { key: 'craftsman_title', label: t('settings.craftsman_title') },
+        { key: 'craftsman_text', label: t('settings.craftsman_text'), type: 'textarea' },
+        { key: 'craftsman_feature_1', label: t('settings.craftsman_feature_1') },
+        { key: 'craftsman_feature_2', label: t('settings.craftsman_feature_2') },
+        { key: 'why_kicker', label: t('settings.why_kicker') },
+        { key: 'why_title', label: t('settings.why_title') },
+        { key: 'why_lead', label: t('settings.why_lead'), type: 'textarea' },
+        { key: 'why_item_1', label: t('settings.why_item_1') },
+        { key: 'why_item_2', label: t('settings.why_item_2') },
+        { key: 'why_item_3', label: t('settings.why_item_3') },
+        { key: 'why_item_4', label: t('settings.why_item_4') },
+        { key: 'why_item_5', label: t('settings.why_item_5') },
+        { key: 'why_item_6', label: t('settings.why_item_6') },
+        { key: 'why_caption_title', label: t('settings.why_caption_title') },
+        { key: 'why_caption_text', label: t('settings.why_caption_text') },
     ],
-};
+}));
 
 onMounted(async () => {
     const { data } = await axios.get('/api/admin/settings');
@@ -69,7 +71,7 @@ async function submit() {
     try {
         const { data } = await axios.put('/api/admin/settings', form);
         Object.assign(form, data);
-        success.value = 'تم حفظ محتوى الموقع، وتظهر التغييرات فوراً في الصفحة الرئيسية.';
+        success.value = t('settings.saved');
         toast.success(success.value);
     } catch (e) {
         error.value = message(e);
@@ -83,8 +85,8 @@ async function submit() {
 <template>
     <section class="space-y-5">
         <div>
-            <h2 class="text-2xl font-black text-primary">محتوى الموقع</h2>
-            <p class="text-sm text-slate-500">هذه النصوص هي نفس محتوى قالب ركيزة على الصفحة الرئيسية.</p>
+            <h2 class="text-2xl font-black text-primary">{{ t('settings.title') }}</h2>
+            <p class="text-sm text-slate-500">{{ t('settings.subtitle') }}</p>
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -121,7 +123,7 @@ async function submit() {
                 </div>
             </div>
 
-            <button type="submit" class="mt-6 rounded-xl bg-accent px-5 py-2.5 font-extrabold text-white hover:bg-accent-hover" :disabled="loading">حفظ المحتوى</button>
+            <button type="submit" class="mt-6 rounded-xl bg-accent px-5 py-2.5 font-extrabold text-white hover:bg-accent-hover" :disabled="loading">{{ t('settings.save') }}</button>
         </form>
     </section>
 </template>

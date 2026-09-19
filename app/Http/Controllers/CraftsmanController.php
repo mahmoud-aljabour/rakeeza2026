@@ -24,29 +24,38 @@ final class CraftsmanController extends Controller
 
     public function store(StoreCraftsmanRequest $request, CraftsmanService $craftsmen): JsonResponse
     {
-        $craftsman = $craftsmen->create($request->validated());
+        $craftsman = $craftsmen->create($request->craftsmanPayload());
 
         return response()->json([
-            'message' => 'تم استلام طلب انضمامك، وسيتواصل معك فريق ركيزة قريباً.',
+            'message' => __('site.craftsman.success'),
             'craftsman_id' => $craftsman->id,
         ], 201);
     }
 
     /**
-     * @return list<string>
+     * @return array<string, string>
      */
     private function specialties(ServiceService $services): array
     {
-        $fromCatalog = $services->listActive()->pluck('title')->all();
+        $options = [];
 
-        return array_values(array_unique([
-            ...$fromCatalog,
-            'سباكة',
-            'كهرباء',
-            'دهان وديكور',
-            'أعمال بناء',
-            'حدادة وألمنيوم',
-            'تخصص آخر',
-        ]));
+        foreach ($services->listActive() as $service) {
+            $options[$service->title] = $service->displayTitle();
+        }
+
+        $extras = [
+            'سباكة' => __('site.specialty.plumbing'),
+            'كهرباء' => __('site.specialty.electrical'),
+            'دهان وديكور' => __('site.specialty.painting'),
+            'أعمال بناء' => __('site.specialty.construction'),
+            'حدادة وألمنيوم' => __('site.specialty.metalwork'),
+            'تخصص آخر' => __('site.specialty.other'),
+        ];
+
+        foreach ($extras as $value => $label) {
+            $options[$value] = $label;
+        }
+
+        return $options;
     }
 }

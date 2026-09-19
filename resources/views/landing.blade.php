@@ -1,78 +1,12 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0a3356">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name') }} | حلول متكاملة لترميم وتأهيل المنازل والمنشآت</title>
-    <link rel="icon" href="{{ asset('images/logo.png') }}" type="image/png">
-    <link rel="apple-touch-icon" href="{{ asset('images/logo.png') }}">
+@extends('layouts.site')
+
+@section('title', __('site.meta.landing_title', ['app' => config('app.name')]))
+
+@push('head')
     <link rel="preload" as="image" href="{{ asset('images/hero-bg-3.jpg') }}">
-    <!-- Google Fonts: Cairo — خط عربي واحد للعناوين والنصوص -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    @vite(['resources/css/landing.css', 'resources/js/landing.js'])
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    
-</head>
-<body>
+@endpush
 
-    <a class="skip-link" href="#main">تخطي إلى المحتوى</a>
-
-    <div class="scroll-progress" aria-hidden="true"></div>
-
-    <!-- Top Info Bar -->
-    <div class="top-bar">
-        <div class="top-bar-contact">
-            <a href="tel:{{ $site['phone'] }}"><i class="fa-solid fa-phone"></i> {{ $site['phone'] }}</a>
-            <a href="mailto:{{ $site['email'] }}"><i class="fa-solid fa-envelope"></i> {{ $site['email'] }}</a>
-        </div>
-        <div class="top-bar-actions">
-            <a href="{{ route('craftsman.create') }}" class="btn-craftsman-link"><i class="fa-solid fa-user-gear"></i> انضم كحرفي</a>
-        </div>
-    </div>
-
-    <!-- Main Navigation Header (Glassmorphism Pill Design) -->
-    <header>
-        <div class="nav-container">
-            <div class="logo-area">
-                <a href="#home" aria-label="ركيزة - للتشطيب والصيانة">
-                    <img src="{{ asset('images/logo.png') }}" alt="ركيزة للتشطيب والصيانة" width="85" height="54" decoding="async">
-                </a>
-            </div>
-
-            <nav class="nav-menu" id="main-nav">
-                <a href="#home">الرئيسية</a>
-                <a href="#about">من نحن</a>
-                <a href="#services">خدماتنا</a>
-                <a href="#projects">أعمالنا السابقة</a>
-                <a href="#contact">اتصل بنا</a>
-            </nav>
-
-            <div class="header-actions">
-                <a href="{{ route('craftsman.create') }}" class="nav-cta">
-                    <span class="nav-cta-full">انضم إلينا كحرفي</span>
-                    <span class="nav-cta-short">انضم كحرفي</span>
-                </a>
-                <button type="button" class="menu-toggle" aria-label="فتح القائمة" aria-expanded="false" aria-controls="main-nav">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-            </div>
-        </div>
-    </header>
-    <div class="nav-overlay" id="nav-overlay" aria-hidden="true"></div>
-
-    <main id="main">
+@section('content')
     <!-- Hero Section -->
     <section class="hero" id="home" data-nav-bg="dark">
         <div class="hero-slides" aria-hidden="true">
@@ -83,12 +17,12 @@
         <div class="hero-container">
             <div class="hero-content">
                 <span class="hero-kicker">{{ $site['hero_kicker'] }}</span>
-                <h1>{{ $site['hero_title'] }}<span>{{ $site['hero_highlight'] }}</span></h1>
+                <h1>{{ trim($site['hero_title']) }} <span>{{ $site['hero_highlight'] }}</span></h1>
                 <p>{{ $site['hero_text'] }}</p>
                 <div class="hero-btns">
                     <a href="tel:{{ $site['phone'] }}" class="btn-primary">
                         <i class="fa-solid fa-phone-volume"></i>
-                        تواصل معنا لطلب الخدمة
+                        {{ __('site.hero.cta') }}
                     </a>
                 </div>
             </div>
@@ -101,29 +35,29 @@
             <div class="feature-box">
                 <div class="feature-icon"><i class="fa-solid fa-faucet-drip"></i></div>
                 <div>
-                    <h4>خدمات السباكة</h4>
-                    <p>صيانة وإصلاح موثوق</p>
+                    <h4>{{ __('site.features.plumbing_title') }}</h4>
+                    <p>{{ __('site.features.plumbing_text') }}</p>
                 </div>
             </div>
             <div class="feature-box">
                 <div class="feature-icon"><i class="fa-solid fa-compass-drafting"></i></div>
                 <div>
-                    <h4>الهندسة المعمارية</h4>
-                    <p>استشارات وتصميم متخصص</p>
+                    <h4>{{ __('site.features.architecture_title') }}</h4>
+                    <p>{{ __('site.features.architecture_text') }}</p>
                 </div>
             </div>
             <div class="feature-box">
                 <div class="feature-icon"><i class="fa-solid fa-trowel-bricks"></i></div>
                 <div>
-                    <h4>تسقيف وترميم</h4>
-                    <p>حلول بناء وتأهيل متينة</p>
+                    <h4>{{ __('site.features.roofing_title') }}</h4>
+                    <p>{{ __('site.features.roofing_text') }}</p>
                 </div>
             </div>
             <div class="feature-box">
                 <div class="feature-icon"><i class="fa-solid fa-helmet-safety"></i></div>
                 <div>
-                    <h4>أعمال البناء</h4>
-                    <p>التزام بمعايير السلامة</p>
+                    <h4>{{ __('site.features.construction_title') }}</h4>
+                    <p>{{ __('site.features.construction_text') }}</p>
                 </div>
             </div>
         </div>
@@ -134,7 +68,7 @@
         <div class="container">
             <div class="about-grid">
                 <div class="about-text">
-                    <h3>من نحن</h3>
+                    <h3>{{ __('site.about.title') }}</h3>
                     <p>{{ $site['about_text'] }}</p>
                     
                     <div class="about-highlights">
@@ -152,14 +86,14 @@
                         <a class="contact-box-sm" href="tel:{{ $site['phone'] }}">
                             <i class="fa-solid fa-phone-flip" aria-hidden="true"></i>
                             <div>
-                                <span>اطلب عرض سعر سريع:</span>
+                                <span>{{ __('site.about.quote_label') }}</span>
                                 <strong class="ltr">{{ $site['phone'] }}</strong>
                             </div>
                         </a>
                         <a class="contact-box-sm" href="mailto:{{ $site['email'] }}">
                             <i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i>
                             <div>
-                                <span>البريد الإلكتروني:</span>
+                                <span>{{ __('site.about.email_label') }}</span>
                                 <strong class="ltr" style="font-size:0.85rem;">{{ $site['email'] }}</strong>
                             </div>
                         </a>
@@ -167,7 +101,7 @@
                 </div>
 
                 <div class="why-us-image-card about-photo-card">
-                    <img src="{{ asset('images/about-team.jpg') }}" alt="فني ركيزة للتشطيب والصيانة" loading="lazy" decoding="async">
+                    <img src="{{ asset('images/about-team.jpg') }}" alt="{{ __('site.about.photo_alt') }}" loading="lazy" decoding="async">
                 </div>
             </div>
         </div>
@@ -177,27 +111,27 @@
     <section class="section-padding" id="services">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">خدماتنا الشاملة</h2>
+                <h2 class="section-title">{{ __('site.services.title') }}</h2>
             </div>
 
             <div class="services-grid">
                 @foreach ($services as $service)
                     <article class="service-card">
                         <a href="{{ route('services.show', $service) }}" class="service-image">
-                            <img src="{{ $service->imageUrl() }}" alt="{{ $service->title }}" loading="lazy" decoding="async">
+                            <img src="{{ $service->imageUrl() }}" alt="{{ $service->displayTitle() }}" loading="lazy" decoding="async">
                         </a>
                         <div class="service-body">
                             <div>
                                 <div class="service-header">
                                     <h3 class="service-title">
-                                        <a href="{{ route('services.show', $service) }}">{{ $service->title }}</a>
+                                        <a href="{{ route('services.show', $service) }}">{{ $service->displayTitle() }}</a>
                                     </h3>
                                 </div>
-                                <p class="service-desc">{{ $service->description }}</p>
+                                <p class="service-desc">{{ $service->displayDescription() }}</p>
                             </div>
                             <a href="{{ route('services.show', $service) }}" class="service-btn">
-                                عرض التفاصيل
-                                <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                                {{ __('site.services.details') }}
+                                <i class="fa-solid {{ \App\Support\AppLocale::isRtl() ? 'fa-arrow-left' : 'fa-arrow-right' }}" aria-hidden="true"></i>
                             </a>
                         </div>
                     </article>
@@ -206,7 +140,7 @@
 
             <!-- Our Vision -->
             <div class="vision-card">
-                <h3><i class="fa-solid fa-eye" style="color: var(--accent);"></i> رؤيتنا</h3>
+                <h3><i class="fa-solid fa-eye" style="color: var(--accent);"></i> {{ __('site.services.vision') }}</h3>
                 <p>{{ $site['vision_text'] }}</p>
             </div>
         </div>
@@ -216,7 +150,7 @@
     <section class="section-padding" id="projects">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">اطلع على أحدث أعمالنا</h2>
+                <h2 class="section-title">{{ __('site.services.more_projects') }}</h2>
             </div>
             <div class="projects-grid">
                 @foreach ($projects as $project)
@@ -245,15 +179,15 @@
                         </li>
                     </ul>
                     <div class="craftsman-join">
-                        <h4>انضم إلى فريق ركيزة اليوم</h4>
+                        <h4>{{ __('site.craftsman.join_today') }}</h4>
                         <a href="{{ route('craftsman.create') }}" class="btn-primary craftsman-join-btn">
                             <i class="fa-solid fa-user-plus"></i>
-                            سجّل كحرفي الآن
+                            {{ __('site.craftsman.register_now') }}
                         </a>
                     </div>
                 </div>
                 <div class="craftsman-action">
-                    <img src="{{ asset('images/craftsman.jpg') }}" alt="حرفي ركيزة أثناء العمل" loading="lazy" decoding="async">
+                    <img src="{{ asset('images/craftsman.jpg') }}" alt="{{ __('site.craftsman.photo_alt') }}" loading="lazy" decoding="async">
                 </div>
             </div>
         </div>
@@ -269,34 +203,34 @@
                     <p class="why-us-lead">{{ $site['why_lead'] }}</p>
                     <div class="why-list">
                         <div class="why-item">
-                            <i class="fa-solid fa-bolt"></i>
-                            {{ $site['why_item_1'] }}
+                            <span class="why-item-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
+                            <span>{{ $site['why_item_1'] }}</span>
                         </div>
                         <div class="why-item">
-                            <i class="fa-solid fa-users-gear"></i>
-                            {{ $site['why_item_2'] }}
+                            <span class="why-item-icon" aria-hidden="true"><i class="fa-solid fa-users-gear"></i></span>
+                            <span>{{ $site['why_item_2'] }}</span>
                         </div>
                         <div class="why-item">
-                            <i class="fa-solid fa-toolbox"></i>
-                            {{ $site['why_item_3'] }}
+                            <span class="why-item-icon" aria-hidden="true"><i class="fa-solid fa-toolbox"></i></span>
+                            <span>{{ $site['why_item_3'] }}</span>
                         </div>
                         <div class="why-item">
-                            <i class="fa-solid fa-clipboard-list"></i>
-                            {{ $site['why_item_4'] }}
+                            <span class="why-item-icon" aria-hidden="true"><i class="fa-solid fa-clipboard-list"></i></span>
+                            <span>{{ $site['why_item_4'] }}</span>
                         </div>
                         <div class="why-item">
-                            <i class="fa-solid fa-tags"></i>
-                            {{ $site['why_item_5'] }}
+                            <span class="why-item-icon" aria-hidden="true"><i class="fa-solid fa-tags"></i></span>
+                            <span>{{ $site['why_item_5'] }}</span>
                         </div>
                         <div class="why-item">
-                            <i class="fa-solid fa-shield-virus"></i>
-                            {{ $site['why_item_6'] }}
+                            <span class="why-item-icon" aria-hidden="true"><i class="fa-solid fa-shield-halved"></i></span>
+                            <span>{{ $site['why_item_6'] }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="why-us-image-card why-us-photo">
-                    <img src="{{ asset('images/why-us.jpg') }}" alt="تخطيط هندسي واحترافية في التنفيذ" loading="lazy" decoding="async">
+                    <img src="{{ asset('images/why-us.jpg') }}" alt="{{ __('site.why_photo_alt') }}" loading="lazy" decoding="async">
                     <div class="why-us-caption">
                         <h4>{{ $site['why_caption_title'] }}</h4>
                         <p>{{ $site['why_caption_text'] }}</p>
@@ -310,7 +244,7 @@
     <section class="section-padding contact-section" id="contact">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">اتصل بنا</h2>
+                <h2 class="section-title">{{ __('site.contact.title') }}</h2>
             </div>
             <p class="contact-intro">{{ $site['contact_intro'] }}</p>
 
@@ -319,124 +253,76 @@
                     <a class="contact-info-item is-phone" href="tel:{{ $site['phone'] }}">
                         <span class="contact-info-icon" aria-hidden="true"><i class="fa-solid fa-phone"></i></span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">الهاتف</span>
+                            <span class="contact-info-label">{{ __('site.contact.phone') }}</span>
                             <strong class="ltr">{{ $site['phone'] }}</strong>
                         </div>
                     </a>
                     <a class="contact-info-item is-email" href="mailto:{{ $site['email'] }}">
                         <span class="contact-info-icon" aria-hidden="true"><i class="fa-solid fa-envelope"></i></span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">البريد الإلكتروني</span>
+                            <span class="contact-info-label">{{ __('site.contact.email') }}</span>
                             <strong class="ltr">{{ $site['email'] }}</strong>
                         </div>
                     </a>
                     <a class="contact-info-item is-whatsapp" href="https://wa.me/{{ $site['whatsapp'] }}" target="_blank" rel="noopener noreferrer">
                         <span class="contact-info-icon" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">واتساب</span>
-                            <strong>تواصل مباشر مع الفريق</strong>
+                            <span class="contact-info-label">{{ __('site.contact.whatsapp') }}</span>
+                            <strong>{{ __('site.contact.whatsapp_direct') }}</strong>
                         </div>
                     </a>
                     <div class="contact-info-item is-hours">
                         <span class="contact-info-icon" aria-hidden="true"><i class="fa-solid fa-clock"></i></span>
                         <div class="contact-info-text">
-                            <span class="contact-info-label">ساعات العمل</span>
+                            <span class="contact-info-label">{{ __('site.contact.hours') }}</span>
                             <strong>{{ $site['hours'] }}</strong>
                         </div>
                     </div>
                 </div>
 
-                <form class="contact-form-card" id="contact-form" action="{{ route('leads.store') }}" method="POST" data-whatsapp="{{ $site['whatsapp'] }}">
+                <form class="contact-form-card" id="contact-form" action="{{ route('leads.store') }}" method="POST">
                     @csrf
-                    <h3>أرسل طلبك</h3>
-                    <p>عبّئ البيانات وسنفتح واتساب برسالة جاهزة لإرسالها مباشرة.</p>
+                    <h3>{{ __('site.contact.form_title') }}</h3>
+                    <p>{{ __('site.contact.form_email_intro') }}</p>
+                    <div class="hp-field" aria-hidden="true">
+                        <label for="contact-website">Website</label>
+                        <input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off">
+                    </div>
                     <div class="form-row">
                         <div class="form-field">
-                            <label for="contact-name">الاسم</label>
-                            <input id="contact-name" name="name" type="text" required autocomplete="name" placeholder="اسمك الكامل">
+                            <label for="contact-name">{{ __('site.contact.name') }}</label>
+                            <input id="contact-name" name="name" type="text" required autocomplete="name" minlength="2" maxlength="80" placeholder="{{ __('site.contact.name_placeholder') }}">
                         </div>
                         <div class="form-field">
-                            <label for="contact-phone">رقم الجوال</label>
+                            <label for="contact-phone">{{ __('site.contact.phone_field') }}</label>
                             <input id="contact-phone" name="phone" type="tel" required autocomplete="tel" inputmode="tel" placeholder="05xxxxxxxx" dir="ltr">
                         </div>
                     </div>
                     <div class="form-field">
-                        <label for="contact-service">نوع الخدمة</label>
+                        <label for="contact-email">{{ __('site.contact.email_field') }}</label>
+                        <input id="contact-email" name="email" type="email" required autocomplete="email" inputmode="email" maxlength="255" placeholder="{{ __('site.contact.email_placeholder') }}" dir="ltr">
+                    </div>
+                    <div class="form-field">
+                        <label for="contact-service">{{ __('site.contact.service') }}</label>
                         <select id="contact-service" name="service_id" required>
-                            <option value="" selected disabled>اختر الخدمة المطلوبة</option>
+                            <option value="" selected disabled>{{ __('site.contact.service_placeholder') }}</option>
                             @foreach ($services as $service)
-                                <option value="{{ $service->id }}">{{ $service->title }}</option>
+                                <option value="{{ $service->id }}">{{ $service->displayTitle() }}</option>
                             @endforeach
-                            <option value="general">استفسار عام</option>
+                            <option value="general">{{ __('site.contact.general_inquiry') }}</option>
                         </select>
                     </div>
                     <div class="form-field">
-                        <label for="contact-message">تفاصيل الطلب</label>
-                        <textarea id="contact-message" name="message" required placeholder="اكتب تفاصيل العمل أو الموقع أو أي ملاحظات..."></textarea>
+                        <label for="contact-message">{{ __('site.contact.details') }}</label>
+                        <textarea id="contact-message" name="message" required maxlength="1000" placeholder="{{ __('site.contact.details_placeholder') }}"></textarea>
                     </div>
-                    <button type="submit" class="btn-primary">
-                        <i class="fa-brands fa-whatsapp"></i>
-                        إرسال عبر واتساب
+                    <button type="submit" class="btn-primary" data-default-label="{{ __('site.contact.send_request') }}" data-loading-label="{{ __('site.contact.sending') }}">
+                        <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                        <span>{{ __('site.contact.send_request') }}</span>
                     </button>
                     <p class="form-note" id="contact-form-note" role="status"></p>
                 </form>
             </div>
         </div>
     </section>
-
-    </main>
-
-    <!-- Footer -->
-    <footer data-nav-bg="dark">
-        <div class="footer-grid">
-            <div class="footer-about">
-                <a href="#home" class="footer-logo" aria-label="ركيزة - للتشطيب والصيانة">
-                    <img src="{{ asset('images/logo.png') }}" alt="ركيزة للتشطيب والصيانة" width="120" height="64" decoding="async">
-                </a>
-                <p>{{ $site['footer_about'] }}</p>
-            </div>
-
-            <div>
-                <h4 class="footer-title">روابط سريعة</h4>
-                <ul class="footer-links">
-                    <li><a href="#home">الرئيسية</a></li>
-                    <li><a href="#about">من نحن</a></li>
-                    <li><a href="#services">خدماتنا</a></li>
-                    <li><a href="#projects">أعمالنا السابقة</a></li>
-                    <li><a href="{{ route('craftsman.create') }}">تسجيل الحرفيين</a></li>
-                    <li><a href="#contact">اتصل بنا</a></li>
-                </ul>
-            </div>
-
-            <div>
-                <h4 class="footer-title">خدماتنا</h4>
-                <ul class="footer-links">
-                    @foreach ($services->take(4) as $service)
-                        <li><a href="{{ route('services.show', $service) }}">{{ $service->title }}</a></li>
-                    @endforeach
-                </ul>
-            </div>
-
-            <div>
-                <h4 class="footer-title">تواصل معنا</h4>
-                <ul class="footer-contact">
-                    <li><a href="tel:{{ $site['phone'] }}"><i class="fa-solid fa-phone" aria-hidden="true"></i> <span dir="ltr">{{ $site['phone'] }}</span></a></li>
-                    <li><a href="mailto:{{ $site['email'] }}"><i class="fa-solid fa-envelope" aria-hidden="true"></i> <span dir="ltr">{{ $site['email'] }}</span></a></li>
-                    <li><i class="fa-solid fa-clock" aria-hidden="true"></i> <span>{{ $site['hours'] }}</span></li>
-                </ul>
-            </div>
-        </div>
-
-        <div class="copyright">
-            جميع الحقوق محفوظة &copy; 2026 - شركة ركيزة للخدمات المتكاملة
-        </div>
-    </footer>
-
-    <!-- Floating WhatsApp Call Button -->
-    <a href="https://wa.me/{{ $site['whatsapp'] }}" class="floating-whatsapp" target="_blank" rel="noopener noreferrer" aria-label="تواصل عبر واتساب">
-        <i class="fa-brands fa-whatsapp"></i>
-    </a>
-
-    
-    </body>
-</html>
+@endsection

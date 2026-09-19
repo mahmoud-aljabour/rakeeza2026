@@ -6,7 +6,9 @@ namespace App\Services;
 
 use App\Enums\CraftsmanStatus;
 use App\Models\Craftsman;
+use App\Models\CraftsmanNote;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 final class CraftsmanService
 {
@@ -16,14 +18,26 @@ final class CraftsmanService
     public function list(?CraftsmanStatus $status = null): Collection
     {
         return Craftsman::query()
+            ->with('notes')
             ->when($status instanceof CraftsmanStatus, fn ($query) => $query->where('status', $status))
             ->latest()
             ->get();
     }
 
+    /**
+     * @return Collection<int, Craftsman>
+     */
+    public function latest(int $limit = 5): Collection
+    {
+        return Craftsman::query()
+            ->latest('id')
+            ->limit($limit)
+            ->get();
+    }
+
     public function find(int $id): Craftsman
     {
-        return Craftsman::query()->findOrFail($id);
+        return Craftsman::query()->with('notes')->findOrFail($id);
     }
 
     /**
@@ -38,11 +52,24 @@ final class CraftsmanService
         return Craftsman::query()->create($data);
     }
 
-    public function updateStatus(Craftsman $craftsman, CraftsmanStatus $status): Craftsman
-    {
-        $craftsman->update(['status' => $status]);
+    public function updateStatus(
+        Craftsman $craftsman,
+        CraftsmanStatus $status,
+        ?string $note = null,
+        ?int $userId = null,
+    ): Craftsman {
+        return DB::transaction(function () use ($craftsman, $status, $note, $userId): Craftsman {
+            $craftsman->update(['status' => $status]);
 
-        return $craftsman->refresh();
+            CraftsmanNote::query()->create([
+                'craftsman_id' => $craftsman->id,
+                'status' => $status,
+                'note' => filled($note) ? trim($note) : null,
+                'user_id' => $userId,
+            ]);
+
+            return $craftsman->refresh()->load('notes');
+        });
     }
 
     public function delete(Craftsman $craftsman): bool

@@ -1,4 +1,8 @@
 <script setup>
+import { useLocale } from '../composables/useLocale';
+
+const { t } = useLocale();
+
 defineProps({
     page: {
         type: Number,
@@ -40,7 +44,7 @@ function pages(current, last) {
 <template>
     <div v-if="total > 0" class="flex flex-wrap items-center justify-between gap-3">
         <p class="text-sm font-bold text-slate-500">
-            عرض {{ from }}–{{ to }} من {{ total }}
+            {{ t('common.showing', { from, to, total }) }}
         </p>
         <div v-if="lastPage > 1" class="flex flex-wrap items-center gap-1">
             <button
@@ -49,7 +53,7 @@ function pages(current, last) {
                 :disabled="page <= 1"
                 @click="emit('change', page - 1)"
             >
-                السابق
+                {{ t('common.previous') }}
             </button>
             <button
                 v-for="item in pages(page, lastPage)"
@@ -67,7 +71,7 @@ function pages(current, last) {
                 :disabled="page >= lastPage"
                 @click="emit('change', page + 1)"
             >
-                التالي
+                {{ t('common.next') }}
             </button>
         </div>
     </div>

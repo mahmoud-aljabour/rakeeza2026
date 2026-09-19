@@ -4,11 +4,13 @@ import { RouterLink } from 'vue-router';
 import axios from 'axios';
 import { useApiError } from '../../composables/useApiError';
 import { useToast } from '../../composables/useToast';
+import { useLocale } from '../../composables/useLocale';
 import { itemsFrom, metaFrom } from '../../composables/usePaginatedList';
 import PaginationBar from '../../components/PaginationBar.vue';
 
 const { message } = useApiError();
 const toast = useToast();
+const { t } = useLocale();
 const services = ref([]);
 const error = ref('');
 const loading = ref(true);
@@ -44,11 +46,11 @@ async function load(nextPage = page.value) {
 }
 
 async function remove(service) {
-    if (!confirm(`حذف خدمة "${service.title}"؟`)) return;
+    if (!confirm(t('services.confirm_delete', { title: service.title }))) return;
     error.value = '';
     try {
         const { data } = await axios.delete(`/api/admin/services/${service.id}`);
-        toast.fromResponse(data, 'تم حذف الخدمة بنجاح.');
+        toast.fromResponse(data, t('services.deleted'));
         const nextPage = services.value.length === 1 && page.value > 1 ? page.value - 1 : page.value;
         await load(nextPage);
     } catch (e) {
@@ -64,10 +66,10 @@ onMounted(() => load(1));
     <section class="space-y-5">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <h2 class="text-2xl font-black text-primary">الخدمات</h2>
-                <p class="text-sm text-slate-500">تظهر الخدمات النشطة فقط في الصفحة الرئيسية.</p>
+                <h2 class="text-2xl font-black text-primary">{{ t('services.title') }}</h2>
+                <p class="text-sm text-slate-500">{{ t('services.subtitle') }}</p>
             </div>
-            <RouterLink to="/services/create" class="rounded-xl bg-accent px-4 py-2.5 text-sm font-extrabold text-white hover:bg-accent-hover">إضافة خدمة</RouterLink>
+            <RouterLink to="/services/create" class="rounded-xl bg-accent px-4 py-2.5 text-sm font-extrabold text-white hover:bg-accent-hover">{{ t('services.add') }}</RouterLink>
         </div>
 
         <p v-if="error" class="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</p>
@@ -90,17 +92,17 @@ onMounted(() => load(1));
                     <div class="mb-2 flex items-center justify-between gap-2">
                         <h3 class="font-extrabold text-primary">{{ service.title }}</h3>
                         <span class="rounded-full px-2 py-0.5 text-xs font-bold" :class="service.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'">
-                            {{ service.is_active ? 'ظاهرة' : 'مخفية' }}
+                            {{ service.is_active ? t('services.visible') : t('services.hidden') }}
                         </span>
                     </div>
                     <p class="line-clamp-3 text-sm text-slate-500">{{ service.description }}</p>
                     <div class="mt-4 flex gap-2">
-                        <RouterLink :to="`/services/${service.id}/edit`" class="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white">تعديل</RouterLink>
-                        <button type="button" class="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700" @click="remove(service)">حذف</button>
+                        <RouterLink :to="`/services/${service.id}/edit`" class="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white">{{ t('edit') }}</RouterLink>
+                        <button type="button" class="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-red-700" @click="remove(service)">{{ t('delete') }}</button>
                     </div>
                 </div>
             </article>
-            <p v-if="!services.length" class="col-span-full rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-slate-400">لا توجد خدمات بعد.</p>
+            <p v-if="!services.length" class="col-span-full rounded-2xl border border-dashed border-slate-200 px-4 py-10 text-center text-slate-400">{{ t('services.empty') }}</p>
         </div>
 
         <PaginationBar

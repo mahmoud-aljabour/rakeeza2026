@@ -4,12 +4,17 @@ import { RouterLink, useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import { useApiError } from '../../composables/useApiError';
 import { useToast } from '../../composables/useToast';
+import { useLocale } from '../../composables/useLocale';
 import ImageDropzone from '../../components/ImageDropzone.vue';
+import ContentLocaleTabs from '../../components/ContentLocaleTabs.vue';
+
+const contentTab = ref('ar');
 
 const route = useRoute();
 const router = useRouter();
 const { message } = useApiError();
 const toast = useToast();
+const { t } = useLocale();
 const isEdit = Boolean(route.params.id);
 const error = ref('');
 const loading = ref(false);
@@ -17,7 +22,10 @@ const preview = ref('');
 const imageSource = ref('upload');
 const form = reactive({
     title: '',
+    title_en: '',
     description: '',
+    description_en: '',
+    projects_count: 0,
     is_active: true,
     image: null,
     image_url: '',
@@ -30,7 +38,10 @@ onMounted(async () => {
 
     const { data } = await axios.get(`/api/admin/services/${route.params.id}`);
     form.title = data.title;
+    form.title_en = data.title_en || '';
     form.description = data.description || '';
+    form.description_en = data.description_en || '';
+    form.projects_count = data.projects_count ?? 0;
     form.is_active = data.is_active;
     preview.value = data.image_url;
 
@@ -82,7 +93,10 @@ async function submit() {
     loading.value = true;
     const payload = new FormData();
     payload.append('title', form.title);
+    payload.append('title_en', form.title_en);
     payload.append('description', form.description);
+    payload.append('description_en', form.description_en);
+    payload.append('projects_count', String(form.projects_count ?? 0));
     payload.append('is_active', form.is_active ? '1' : '0');
 
     if (imageSource.value === 'upload' && form.image) {
@@ -96,10 +110,10 @@ async function submit() {
     try {
         if (isEdit) {
             await axios.post(`/api/admin/services/${route.params.id}`, payload);
-            toast.success('تم تعديل الخدمة بنجاح.');
+            toast.success(t('services.updated'));
         } else {
             await axios.post('/api/admin/services', payload);
-            toast.success('تم إضافة الخدمة بنجاح.');
+            toast.success(t('services.created'));
         }
         await router.push({ name: 'services' });
     } catch (e) {
@@ -113,22 +127,43 @@ async function submit() {
 
 <template>
     <section class="mx-auto max-w-2xl space-y-5">
-        <h2 class="text-2xl font-black text-primary">{{ isEdit ? 'تعديل الخدمة' : 'إضافة خدمة' }}</h2>
+        <h2 class="text-2xl font-black text-primary">{{ isEdit ? t('services.edit') : t('services.create') }}</h2>
         <form class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" @submit.prevent="submit">
             <p v-if="error" class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</p>
 
-            <label class="mb-2 block text-sm font-extrabold text-primary">عنوان الخدمة</label>
-            <input v-model="form.title" required class="mb-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary">
+            <ContentLocaleTabs v-model="contentTab" class="mb-6">
+                <template #ar>
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.field_title') }}</label>
+                    <input v-model="form.title" required dir="rtl" class="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary">
 
-            <label class="mb-2 block text-sm font-extrabold text-primary">الوصف</label>
-            <textarea v-model="form.description" rows="5" class="mb-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('description') }}</label>
+                    <textarea v-model="form.description" rows="5" dir="rtl" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                </template>
+                <template #en>
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('common.en_title') }}</label>
+                    <input v-model="form.title_en" class="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary">
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('common.en_description') }}</label>
+                    <textarea v-model="form.description_en" rows="5" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                </template>
+            </ContentLocaleTabs>
+
+            <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.projects_count') }}</label>
+            <input
+                v-model.number="form.projects_count"
+                type="number"
+                min="0"
+                dir="ltr"
+                class="mb-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
+            >
+            <p class="mb-4 text-xs font-bold text-slate-500">{{ t('services.projects_count_help') }}</p>
 
             <label class="mb-3 flex items-center gap-2 text-sm font-bold">
                 <input v-model="form.is_active" type="checkbox" class="size-4 accent-accent">
-                إظهار الخدمة في الصفحة الرئيسية
+                {{ t('services.show_home') }}
             </label>
 
-            <p class="mb-2 text-sm font-extrabold text-primary">الصورة</p>
+            <p class="mb-2 text-sm font-extrabold text-primary">{{ t('image') }}</p>
             <div class="mb-3 flex flex-wrap gap-2">
                 <button
                     type="button"
@@ -136,7 +171,7 @@ async function submit() {
                     :class="imageSource === 'url' ? 'bg-accent text-white' : 'border border-slate-200 bg-white text-primary'"
                     @click="useUrl"
                 >
-                    رابط صورة
+                    {{ t('common.image_url') }}
                 </button>
                 <button
                     type="button"
@@ -144,7 +179,7 @@ async function submit() {
                     :class="imageSource === 'upload' ? 'bg-accent text-white' : 'border border-slate-200 bg-white text-primary'"
                     @click="useUpload"
                 >
-                    رفع ملف
+                    {{ t('common.upload_file') }}
                 </button>
             </div>
 
@@ -156,7 +191,7 @@ async function submit() {
                     placeholder="https://example.com/image.jpg"
                     class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-primary"
                 >
-                <p class="mt-2 text-xs text-slate-500">الصق رابط الصورة مباشرة، أو مسارًا من الموقع مثل images/service.jpg</p>
+                <p class="mt-2 text-xs text-slate-500">{{ t('common.image_url_help') }}</p>
             </div>
             <ImageDropzone
                 v-else
@@ -167,8 +202,8 @@ async function submit() {
             <img v-if="imageSource === 'url' && preview" :src="preview" alt="" class="mb-4 h-40 w-full rounded-xl object-cover">
 
             <div class="flex gap-2">
-                <button type="submit" class="rounded-xl bg-accent px-5 py-2.5 font-extrabold text-white hover:bg-accent-hover" :disabled="loading">حفظ</button>
-                <RouterLink to="/services" class="rounded-xl border border-slate-200 px-5 py-2.5 font-bold text-slate-600">إلغاء</RouterLink>
+                <button type="submit" class="rounded-xl bg-accent px-5 py-2.5 font-extrabold text-white hover:bg-accent-hover" :disabled="loading">{{ t('save') }}</button>
+                <RouterLink to="/services" class="rounded-xl border border-slate-200 px-5 py-2.5 font-bold text-slate-600">{{ t('cancel') }}</RouterLink>
             </div>
         </form>
     </section>

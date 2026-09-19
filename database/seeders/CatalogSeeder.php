@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Models\Lead;
 use App\Models\Project;
 use App\Models\Service;
 use App\Scopes\ActiveScope;
@@ -14,10 +15,13 @@ final class CatalogSeeder extends Seeder
 {
     public function run(): void
     {
-        Service::query()
-            ->withoutGlobalScope(ActiveScope::class)
-            ->whereIn('title', ['Plumbing', 'Hidden'])
-            ->delete();
+        $catalog = require lang_path('en/catalog.php');
+        $serviceCatalog = is_array($catalog['services'] ?? null) ? $catalog['services'] : [];
+        $projectCatalog = is_array($catalog['projects'] ?? null) ? $catalog['projects'] : [];
+
+        Lead::query()->update(['service_id' => null]);
+        Project::query()->delete();
+        Service::query()->withoutGlobalScope(ActiveScope::class)->delete();
 
         $services = [
             [
@@ -53,14 +57,16 @@ final class CatalogSeeder extends Seeder
         ];
 
         foreach ($services as $service) {
-            Service::query()->updateOrCreate(
-                ['title' => $service['title']],
-                [
-                    'description' => $service['description'],
-                    'image_path' => $service['image_path'],
-                    'is_active' => true,
-                ],
-            );
+            $english = $serviceCatalog[$service['title']] ?? [];
+
+            Service::query()->create([
+                'title' => $service['title'],
+                'title_en' => is_string($english['title'] ?? null) ? $english['title'] : null,
+                'description' => $service['description'],
+                'description_en' => is_string($english['description'] ?? null) ? $english['description'] : null,
+                'image_path' => $service['image_path'],
+                'is_active' => true,
+            ]);
         }
 
         $serviceIds = Service::query()
@@ -96,16 +102,18 @@ final class CatalogSeeder extends Seeder
         ];
 
         foreach ($projects as $project) {
-            Project::query()->updateOrCreate(
-                ['title' => $project['title']],
-                [
-                    'details' => $project['details'],
-                    'image_path' => $project['image_path'],
-                    'image_paths' => [$project['image_path']],
-                    'order_column' => $project['order_column'],
-                    'service_id' => $project['service_id'],
-                ],
-            );
+            $english = $projectCatalog[$project['title']] ?? [];
+
+            Project::query()->create([
+                'title' => $project['title'],
+                'title_en' => is_string($english['title'] ?? null) ? $english['title'] : null,
+                'details' => $project['details'],
+                'details_en' => is_string($english['details'] ?? null) ? $english['details'] : null,
+                'image_path' => $project['image_path'],
+                'image_paths' => [$project['image_path']],
+                'order_column' => $project['order_column'],
+                'service_id' => $project['service_id'],
+            ]);
         }
 
         app(SettingService::class)->setMany(config('rakeeza.defaults'));

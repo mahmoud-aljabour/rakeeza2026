@@ -6,13 +6,14 @@
             if (!header || !toggle) return;
 
             var lastFocus = null;
+            var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
 
             function closeMenu() {
                 var wasOpen = header.classList.contains('menu-open');
                 document.body.classList.remove('nav-open');
                 header.classList.remove('menu-open');
                 toggle.setAttribute('aria-expanded', 'false');
-                toggle.setAttribute('aria-label', 'فتح القائمة');
+                toggle.setAttribute('aria-label', i18n.openMenu || 'فتح القائمة');
                 if (overlay) overlay.setAttribute('aria-hidden', 'true');
                 window.dispatchEvent(new Event('nav-theme-refresh'));
                 if (wasOpen && lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
@@ -23,7 +24,7 @@
                 document.body.classList.add('nav-open');
                 header.classList.add('menu-open');
                 toggle.setAttribute('aria-expanded', 'true');
-                toggle.setAttribute('aria-label', 'إغلاق القائمة');
+                toggle.setAttribute('aria-label', i18n.closeMenu || 'إغلاق القائمة');
                 if (overlay) overlay.setAttribute('aria-hidden', 'false');
                 if (links[0]) links[0].focus();
             }
@@ -41,7 +42,7 @@
                 if (e.key === 'Escape') closeMenu();
             });
             window.addEventListener('resize', function () {
-                if (window.innerWidth >= 1200) closeMenu();
+                if (window.innerWidth >= 1025) closeMenu();
             });
         })();
 
@@ -91,24 +92,10 @@
             var header = document.querySelector('header');
             if (!header) return;
 
-            var darkRegions = document.querySelectorAll('[data-nav-bg="dark"]');
-
             function updateNavTheme() {
                 if (header.classList.contains('menu-open')) return;
 
-                var rect = header.getBoundingClientRect();
-                var probe = rect.top + rect.height * 0.5;
-                var onDarkBg = false;
-
-                for (var i = 0; i < darkRegions.length; i++) {
-                    var region = darkRegions[i].getBoundingClientRect();
-                    if (region.top <= probe && region.bottom >= probe) {
-                        onDarkBg = true;
-                        break;
-                    }
-                }
-
-                header.classList.toggle('on-dark', !onDarkBg);
+                header.classList.remove('on-dark');
                 header.classList.toggle('is-scrolled', window.scrollY > 60);
             }
 
@@ -140,25 +127,68 @@
                 serviceSelect.value = preselected;
             }
 
+            function setButtonLoading(button, loading, i18n) {
+                if (!button) return;
+                var label = button.querySelector('span');
+                var icon = button.querySelector('i');
+                button.disabled = loading;
+                button.classList.toggle('is-loading', loading);
+                button.setAttribute('aria-busy', loading ? 'true' : 'false');
+                if (label) {
+                    label.textContent = loading
+                        ? (button.getAttribute('data-loading-label') || i18n.sending || 'جاري الإرسال...')
+                        : (button.getAttribute('data-default-label') || i18n.sendRequest || 'إرسال الطلب');
+                }
+                if (icon) {
+                    icon.className = loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-envelope';
+                }
+            }
+
+            function firstError(data) {
+                if (data && data.errors) {
+                    var values = Object.values(data.errors);
+                    if (values.length && values[0] && values[0][0]) return values[0][0];
+                }
+                return (data && data.message) || '';
+            }
+
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 var name = (document.getElementById('contact-name').value || '').trim();
                 var phone = (document.getElementById('contact-phone').value || '').trim();
+                var emailInput = document.getElementById('contact-email');
+                var email = emailInput ? (emailInput.value || '').trim() : '';
                 var serviceValue = serviceSelect ? (serviceSelect.value || '') : '';
-                var serviceTitle = serviceSelect && serviceSelect.options[serviceSelect.selectedIndex]
-                    ? serviceSelect.options[serviceSelect.selectedIndex].text
-                    : '';
                 var message = (document.getElementById('contact-message').value || '').trim();
-                var whatsapp = form.getAttribute('data-whatsapp') || '970597199099';
+                var honeypot = document.getElementById('contact-website');
                 var token = document.querySelector('meta[name="csrf-token"]');
                 var action = form.getAttribute('action') || '/leads';
+                var button = form.querySelector('button[type="submit"]');
+                var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
+
+                if (note) {
+                    note.classList.remove('is-visible', 'is-success', 'is-error');
+                    note.textContent = '';
+                }
+
+                if (!name || !phone || !email || !serviceValue || !message) {
+                    if (note) {
+                        note.textContent = i18n.requiredFields || 'يرجى تعبئة جميع الحقول المطلوبة.';
+                        note.classList.add('is-visible', 'is-error');
+                    }
+                    return;
+                }
 
                 var payload = {
                     name: name,
                     phone: phone,
-                    service_id: serviceValue === 'general' || serviceValue === '' ? null : Number(serviceValue),
+                    email: email,
+                    service_id: serviceValue === '' ? null : (serviceValue === 'general' ? 'general' : Number(serviceValue)),
                     message: message,
+                    website: honeypot ? honeypot.value : '',
                 };
+
+                setButtonLoading(button, true, i18n);
 
                 fetch(action, {
                     method: 'POST',
@@ -170,19 +200,33 @@
                     },
                     credentials: 'same-origin',
                     body: JSON.stringify(payload),
-                }).finally(function () {
-                    var text = 'مرحباً ركيزة، أود طلب خدمة.' +
-                        '\nالاسم: ' + name +
-                        '\nالجوال: ' + phone +
-                        '\nالخدمة: ' + serviceTitle +
-                        '\nالتفاصيل: ' + message;
-
-                    window.open('https://wa.me/' + whatsapp + '?text=' + encodeURIComponent(text), '_blank');
-
+                }).then(function (res) {
+                    return res.json().then(function (data) {
+                        return { ok: res.ok, data: data };
+                    }).catch(function () {
+                        return { ok: res.ok, data: {} };
+                    });
+                }).then(function (result) {
+                    var succeeded = result.ok && result.data && result.data.success !== false;
                     if (note) {
-                        note.textContent = 'تم تجهيز الرسالة. أكمل الإرسال من واتساب.';
-                        note.classList.add('is-visible', 'is-success');
+                        note.textContent = succeeded
+                            ? ((result.data && result.data.message) || i18n.emailSuccess || 'تم إرسال طلبك بنجاح، سيتواصل معك فريق ركيزة قريباً')
+                            : (firstError(result.data) || i18n.sendFailed || 'تعذر إرسال الطلب. حاول مرة أخرى.');
+                        note.classList.add('is-visible', succeeded ? 'is-success' : 'is-error');
                     }
+                    if (succeeded) {
+                        form.reset();
+                        if (serviceSelect && preselected) {
+                            serviceSelect.value = preselected;
+                        }
+                    }
+                }).catch(function () {
+                    if (note) {
+                        note.textContent = i18n.sendFailed || 'تعذر إرسال الطلب. حاول مرة أخرى.';
+                        note.classList.add('is-visible', 'is-error');
+                    }
+                }).finally(function () {
+                    setButtonLoading(button, false, i18n);
                 });
             });
         })();
@@ -192,17 +236,58 @@
             var note = document.getElementById('craftsman-form-note');
             if (!form) return;
 
+            function openCraftsmanWhatsApp(payload) {
+                var whatsapp = (form.getAttribute('data-whatsapp') || '').replace(/\D/g, '');
+                if (!whatsapp) return;
+
+                var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
+                var lines = [
+                    i18n.craftsmanWhatsappIntro || 'مرحباً ركيزة، أود الانضمام كحرفي.',
+                    '',
+                    (i18n.craftsmanLabelName || 'الاسم') + ': ' + payload.name,
+                    (i18n.craftsmanLabelPhone || 'الجوال') + ': ' + payload.phone,
+                    (i18n.craftsmanLabelCity || 'المدينة') + ': ' + payload.city,
+                    (i18n.craftsmanLabelSpecialty || 'التخصص') + ': ' + payload.specialty,
+                    (i18n.craftsmanLabelExperience || 'سنوات الخبرة') + ': ' + payload.experience_years,
+                    (i18n.craftsmanLabelTools || 'معدات خاصة') + ': ' + (payload.has_tools
+                        ? (i18n.craftsmanYes || 'نعم')
+                        : (i18n.craftsmanNo || 'لا')),
+                ];
+
+                if (payload.bio) {
+                    lines.push((i18n.craftsmanLabelBio || 'نبذة') + ': ' + payload.bio);
+                }
+
+                var url = 'https://wa.me/' + whatsapp + '?text=' + encodeURIComponent(lines.join('\n'));
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
                 var name = (document.getElementById('craftsman-name').value || '').trim();
                 var phone = (document.getElementById('craftsman-phone').value || '').trim();
                 var city = (document.getElementById('craftsman-city').value || '').trim();
-                var specialty = document.getElementById('craftsman-specialty').value || '';
+                var specialtySelect = document.getElementById('craftsman-specialty');
+                var specialty = specialtySelect ? specialtySelect.value || '' : '';
+                var specialtyLabel = specialty;
+                if (specialtySelect && specialtySelect.selectedIndex >= 0) {
+                    specialtyLabel = (specialtySelect.options[specialtySelect.selectedIndex].text || specialty).trim();
+                }
                 var experience = Number(document.getElementById('craftsman-experience').value || 0);
                 var hasTools = document.getElementById('craftsman-tools').checked;
                 var bio = (document.getElementById('craftsman-bio').value || '').trim();
                 var token = document.querySelector('meta[name="csrf-token"]');
                 var button = form.querySelector('button[type="submit"]');
+                var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
+                var payload = {
+                    name: name,
+                    phone: phone,
+                    city: city,
+                    specialty: specialty,
+                    experience_years: experience,
+                    has_tools: hasTools,
+                    bio: bio,
+                };
 
                 if (note) {
                     note.classList.remove('is-visible', 'is-success', 'is-error');
@@ -220,15 +305,7 @@
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                     credentials: 'same-origin',
-                    body: JSON.stringify({
-                        name: name,
-                        phone: phone,
-                        city: city,
-                        specialty: specialty,
-                        experience_years: experience,
-                        has_tools: hasTools,
-                        bio: bio,
-                    }),
+                    body: JSON.stringify(payload),
                 })
                     .then(function (response) {
                         return response.json().then(function (data) {
@@ -238,20 +315,29 @@
                     .then(function (result) {
                         if (!note) return;
                         if (result.ok) {
-                            note.textContent = result.data.message || 'تم استلام طلبك بنجاح.';
+                            note.textContent = i18n.craftsmanWhatsappReady || result.data.message || i18n.craftsmanSuccess || 'تم استلام طلبك بنجاح.';
                             note.classList.add('is-visible', 'is-success');
+                            openCraftsmanWhatsApp({
+                                name: name,
+                                phone: phone,
+                                city: city,
+                                specialty: specialtyLabel,
+                                experience_years: experience,
+                                has_tools: hasTools,
+                                bio: bio,
+                            });
                             form.reset();
                         } else {
                             var firstError = result.data.errors
                                 ? Object.values(result.data.errors)[0][0]
                                 : result.data.message;
-                            note.textContent = firstError || 'تعذر إرسال الطلب.';
+                            note.textContent = firstError || i18n.craftsmanFailed || 'تعذر إرسال الطلب.';
                             note.classList.add('is-visible', 'is-error');
                         }
                     })
                     .catch(function () {
                         if (note) {
-                            note.textContent = 'تعذر إرسال الطلب. حاول مرة أخرى.';
+                            note.textContent = i18n.sendFailed || 'تعذر إرسال الطلب. حاول مرة أخرى.';
                             note.classList.add('is-visible', 'is-error');
                         }
                     })
@@ -470,14 +556,19 @@
             root.setAttribute('role', 'dialog');
             root.setAttribute('aria-modal', 'true');
             root.setAttribute('aria-hidden', 'true');
+            var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
+            var isRtl = !window.Rakeeza || window.Rakeeza.dir !== 'ltr';
+            var prevIcon = isRtl ? 'fa-chevron-right' : 'fa-chevron-left';
+            var nextIcon = isRtl ? 'fa-chevron-left' : 'fa-chevron-right';
+
             root.innerHTML =
                 '<div class="lightbox-backdrop" data-lightbox-close></div>' +
                 '<div class="lightbox-dialog">' +
-                    '<button type="button" class="lightbox-close" data-lightbox-close aria-label="إغلاق المعرض">' +
+                    '<button type="button" class="lightbox-close" data-lightbox-close aria-label="' + (i18n.lightboxClose || 'إغلاق المعرض') + '">' +
                         '<i class="fa-solid fa-xmark"></i>' +
                     '</button>' +
-                    '<button type="button" class="lightbox-nav is-prev" data-lightbox-prev aria-label="الصورة السابقة">' +
-                        '<i class="fa-solid fa-chevron-right"></i>' +
+                    '<button type="button" class="lightbox-nav is-prev" data-lightbox-prev aria-label="' + (i18n.lightboxPrev || 'الصورة السابقة') + '">' +
+                        '<i class="fa-solid ' + prevIcon + '"></i>' +
                     '</button>' +
                     '<figure class="lightbox-figure">' +
                         '<img alt="">' +
@@ -489,8 +580,8 @@
                             '<p data-lightbox-details></p>' +
                         '</figcaption>' +
                     '</figure>' +
-                    '<button type="button" class="lightbox-nav is-next" data-lightbox-next aria-label="الصورة التالية">' +
-                        '<i class="fa-solid fa-chevron-left"></i>' +
+                    '<button type="button" class="lightbox-nav is-next" data-lightbox-next aria-label="' + (i18n.lightboxNext || 'الصورة التالية') + '">' +
+                        '<i class="fa-solid ' + nextIcon + '"></i>' +
                     '</button>' +
                 '</div>';
             document.body.appendChild(root);
@@ -600,10 +691,10 @@
                     close();
                 }
                 if (event.key === 'ArrowRight') {
-                    step(-1);
+                    step(isRtl ? -1 : 1);
                 }
                 if (event.key === 'ArrowLeft') {
-                    step(1);
+                    step(isRtl ? 1 : -1);
                 }
             });
 

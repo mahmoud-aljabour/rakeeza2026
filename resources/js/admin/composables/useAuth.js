@@ -1,5 +1,6 @@
 import { reactive } from 'vue';
 import axios from 'axios';
+import { useLocale } from './useLocale';
 
 const state = reactive({
     user: null,
@@ -7,6 +8,8 @@ const state = reactive({
 });
 
 export function useAuth() {
+    const { t } = useLocale();
+
     async function fetchUser() {
         const { data } = await axios.get('/api/user');
         state.user = data;
@@ -23,7 +26,7 @@ export function useAuth() {
         } catch {
             state.user = null;
             state.loaded = true;
-            throw new Error('تعذر حفظ جلسة الدخول. افتح اللوحة من نفس رابط الموقع ثم أعد تسجيل الدخول.');
+            throw new Error(t('login.session_failed'));
         }
     }
 

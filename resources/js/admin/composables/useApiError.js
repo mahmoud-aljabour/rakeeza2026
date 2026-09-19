@@ -1,7 +1,11 @@
+import { useLocale } from './useLocale';
+
 export function useApiError() {
-    function message(error, fallback = 'تعذر تنفيذ العملية.') {
+    const { t } = useLocale();
+
+    function message(error, fallback) {
         if (error instanceof Error && !error.response) {
-            return error.message || fallback;
+            return error.message || fallback || t('errors.generic');
         }
 
         const status = error?.response?.status;
@@ -9,14 +13,14 @@ export function useApiError() {
             || Object.values(error?.response?.data?.errors || {})[0]?.[0];
 
         if (status === 401 || raw === 'Unauthenticated.') {
-            return 'انتهت الجلسة أو لم تُحفظ. سجّل الدخول مرة أخرى من نفس رابط الموقع.';
+            return t('errors.unauthenticated');
         }
 
         if (status === 419) {
-            return 'انتهت صلاحية النموذج. حدّث الصفحة ثم أعد المحاولة.';
+            return t('errors.expired');
         }
 
-        return raw || fallback;
+        return raw || fallback || t('errors.generic');
     }
 
     return { message };

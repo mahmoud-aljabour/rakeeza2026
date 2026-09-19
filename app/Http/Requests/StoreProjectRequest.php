@@ -21,7 +21,9 @@ class StoreProjectRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'title_en' => ['nullable', 'string', 'max:255'],
             'details' => ['nullable', 'string'],
+            'details_en' => ['nullable', 'string'],
             'service_id' => ['nullable', 'integer', 'exists:services,id'],
             'order_column' => ['nullable', 'integer', 'min:0'],
             'sync_images' => ['sometimes', 'boolean'],

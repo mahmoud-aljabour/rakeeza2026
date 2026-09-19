@@ -52,7 +52,12 @@ final class ServiceDetailsTest extends TestCase
             ->assertSee('تفاصيل الخدمة', false)
             ->assertSee('مشاريع تم تنفيذها', false)
             ->assertSee('تنظيف منشأة', false)
-            ->assertSee('اطلب عرض سعر', false)
+            ->assertSee('اطلب سعر عبر واتساب', false)
+            ->assertSee('إرسال الطلب', false)
+            ->assertSee('fa-envelope', false)
+            ->assertDontSee('إرسال عبر واتساب', false)
+            ->assertDontSee('data-channel="email"', false)
+            ->assertDontSee('data-whatsapp', false)
             ->assertDontSee('مشروع آخر', false)
             ->assertDontSee('عمل عام', false);
     }

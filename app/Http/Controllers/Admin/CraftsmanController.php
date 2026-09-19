@@ -7,17 +7,17 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\CraftsmanStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateCraftsmanRequest;
+use App\Services\CraftsmanExcelExportService;
 use App\Services\CraftsmanService;
-use App\Services\CraftsmanWordExportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class CraftsmanController extends Controller
 {
     public function __construct(
         private readonly CraftsmanService $craftsmen,
-        private readonly CraftsmanWordExportService $wordExport,
+        private readonly CraftsmanExcelExportService $excelExport,
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -27,24 +27,25 @@ final class CraftsmanController extends Controller
         return response()->json($this->craftsmen->list($status));
     }
 
-    public function export(Request $request): Response
+    public function export(Request $request): BinaryFileResponse
     {
         $status = CraftsmanStatus::tryFrom((string) $request->query('status', ''));
 
-        return $this->wordExport->downloadList($this->craftsmen->list($status), $status);
-    }
-
-    public function exportOne(int $craftsman): Response
-    {
-        return $this->wordExport->downloadOne($this->craftsmen->find($craftsman));
+        return $this->excelExport->downloadList($this->craftsmen->list($status), $status);
     }
 
     public function update(UpdateCraftsmanRequest $request, int $craftsman): JsonResponse
     {
         $model = $this->craftsmen->find($craftsman);
-        $status = CraftsmanStatus::from($request->validated('status'));
+        $validated = $request->validated();
+        $status = CraftsmanStatus::from($validated['status']);
+        $note = isset($validated['note']) && $validated['note'] !== ''
+            ? $validated['note']
+            : null;
 
-        return response()->json($this->craftsmen->updateStatus($model, $status));
+        return response()->json(
+            $this->craftsmen->updateStatus($model, $status, $note, $request->user()?->id),
+        );
     }
 
     public function destroy(int $craftsman): JsonResponse
