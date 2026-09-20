@@ -10,6 +10,10 @@ import { useToast } from '../../composables/useToast';
 
 import { useLocale } from '../../composables/useLocale';
 
+import { itemsFrom, metaFrom } from '../../composables/usePaginatedList';
+
+import PaginationBar from '../../components/PaginationBar.vue';
+
 
 
 const { message } = useApiError();
@@ -23,6 +27,12 @@ const craftsmen = ref([]);
 const filter = ref('');
 
 const error = ref('');
+
+const loading = ref(true);
+
+const page = ref(1);
+
+const meta = ref(metaFrom({}, 1));
 
 const exporting = ref(false);
 
@@ -55,13 +65,41 @@ function statusLabel(value) {
 
 }
 
+function specialtyList(value) {
+
+    if (Array.isArray(value)) {
+
+        return value.filter((specialty) => typeof specialty === 'string' && specialty.trim());
+
+    }
+
+    if (typeof value !== 'string' || !value.trim()) {
+
+        return [];
+
+    }
+
+    try {
+
+        const decoded = JSON.parse(value);
+
+        return Array.isArray(decoded) ? specialtyList(decoded) : [value];
+
+    } catch {
+
+        return [value];
+
+    }
+
+}
+
 
 
 function formatSubmittedAt(value) {
 
     if (!value) {
 
-        return '—';
+        return '-';
 
     }
 
@@ -79,15 +117,67 @@ function formatSubmittedAt(value) {
 
 
 
-async function load() {
+async function load(nextPage = page.value) {
 
-    const { data } = await axios.get('/api/admin/craftsmen', {
+    loading.value = true;
 
-        params: filter.value ? { status: filter.value } : {},
+    error.value = '';
 
-    });
+    try {
 
-    craftsmen.value = data;
+        const { data } = await axios.get('/api/admin/craftsmen', {
+
+            params: {
+
+                page: nextPage,
+
+                per_page: 10,
+
+                ...(filter.value ? { status: filter.value } : {}),
+
+            },
+
+        });
+
+        const rows = itemsFrom(data);
+
+        const nextMeta = metaFrom(data, nextPage);
+
+        if (nextMeta.last_page && nextPage > nextMeta.last_page) {
+
+            await load(nextMeta.last_page);
+
+            return;
+
+        }
+
+        craftsmen.value = rows;
+
+        meta.value = nextMeta;
+
+        page.value = nextMeta.current_page;
+
+    } catch (e) {
+
+        craftsmen.value = [];
+
+        error.value = message(e);
+
+        toast.error(error.value);
+
+    } finally {
+
+        loading.value = false;
+
+    }
+
+}
+
+
+
+function onFilterChange() {
+
+    load(1);
 
 }
 
@@ -149,6 +239,12 @@ async function confirmStatusChange() {
 
         cancelStatusChange();
         toast.fromResponse(data, t('craftsmen.updated'));
+
+        if (filter.value && filter.value !== status) {
+
+            await load(page.value);
+
+        }
 
     } catch (e) {
 
@@ -266,7 +362,9 @@ async function remove(item) {
 
         toast.fromResponse(data, t('craftsmen.deleted'));
 
-        await load();
+        const nextPage = craftsmen.value.length === 1 && page.value > 1 ? page.value - 1 : page.value;
+
+        await load(nextPage);
 
     } catch (e) {
 
@@ -326,7 +424,7 @@ watch([selectedCraftsman, statusDraft], ([craftsman, draft]) => {
 
 onMounted(() => {
 
-    load();
+    load(1);
 
     window.addEventListener('keydown', onKeydown);
 
@@ -368,7 +466,7 @@ onUnmounted(() => {
 
                     class="h-11 rounded-xl bg-primary px-4 text-sm font-extrabold text-white hover:bg-primary-light disabled:opacity-60"
 
-                    :disabled="exporting || !craftsmen.length"
+                    :disabled="exporting || meta.total < 1"
 
                     @click="exportList"
 
@@ -388,7 +486,7 @@ onUnmounted(() => {
 
                         class="h-11 min-w-[13.5rem] appearance-none rounded-xl border border-slate-200 bg-white pe-10 ps-4 text-sm font-extrabold text-primary shadow-sm outline-none transition hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/15"
 
-                        @change="load"
+                        @change="onFilterChange"
 
                     >
 
@@ -458,7 +556,23 @@ onUnmounted(() => {
 
                         <td class="px-4 py-3">{{ item.city }}</td>
 
-                        <td class="px-4 py-3">{{ item.specialty }}</td>
+                        <td class="px-4 py-3">
+                            <div v-if="specialtyList(item.specialty).length" class="flex max-w-xs items-center gap-1.5">
+                                <span
+                                    class="inline-flex max-w-[11rem] truncate rounded-full bg-primary/8 px-2.5 py-1 text-xs font-extrabold text-primary"
+                                >
+                                    {{ specialtyList(item.specialty)[0] }}
+                                </span>
+                                <span
+                                    v-if="specialtyList(item.specialty).length > 1"
+                                    class="inline-flex min-w-7 items-center justify-center rounded-full bg-accent/15 px-2 py-1 text-xs font-black text-accent"
+                                    :title="specialtyList(item.specialty).slice(1).join('، ')"
+                                >
+                                    +{{ specialtyList(item.specialty).length - 1 }}
+                                </span>
+                            </div>
+                            <span v-else class="text-slate-400">-</span>
+                        </td>
 
                         <td class="px-4 py-3">{{ t('years', { count: item.experience_years }) }}</td>
 
@@ -516,6 +630,24 @@ onUnmounted(() => {
             </table>
 
         </div>
+
+
+
+        <PaginationBar
+
+            :page="page"
+
+            :last-page="meta.last_page"
+
+            :total="meta.total"
+
+            :from="meta.from"
+
+            :to="meta.to"
+
+            @change="load"
+
+        />
 
 
 
@@ -656,7 +788,17 @@ onUnmounted(() => {
 
                         <dt class="font-extrabold text-primary">{{ t('craftsmen.specialty') }}</dt>
 
-                        <dd class="text-slate-600">{{ selectedCraftsman.specialty }}</dd>
+                        <dd class="mt-2 flex flex-wrap gap-2">
+                            <span
+                                v-for="specialty in specialtyList(selectedCraftsman.specialty)"
+                                :key="specialty"
+                                class="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-xs font-extrabold text-primary"
+                            >
+                                <i class="fa-solid fa-screwdriver-wrench text-[10px] text-accent" aria-hidden="true"></i>
+                                {{ specialty }}
+                            </span>
+                            <span v-if="!specialtyList(selectedCraftsman.specialty).length" class="text-slate-400">-</span>
+                        </dd>
 
                     </div>
 

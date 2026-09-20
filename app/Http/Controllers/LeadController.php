@@ -17,7 +17,7 @@ final class LeadController extends Controller
         if (filled($request->input('website'))) {
             return response()->json([
                 'success' => true,
-                'message' => __('site.form.email_success'),
+                'message' => __('site.form.submission_success'),
             ]);
         }
 
@@ -25,7 +25,7 @@ final class LeadController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => __('site.form.email_success'),
+            'message' => __('site.form.submission_success'),
             'lead_id' => $lead->id,
         ]);
     }

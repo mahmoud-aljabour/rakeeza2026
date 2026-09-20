@@ -129,7 +129,7 @@ final class CraftsmanExcelExportService
     private function copy(string $key, string $locale): string
     {
         $english = [
-            'title' => 'Craftsman registration requests — Rakeeza',
+            'title' => 'Craftsman registration requests Rakeeza',
             'status' => 'Status',
             'all' => 'All',
             'exported_at' => 'Exported at',
@@ -137,7 +137,7 @@ final class CraftsmanExcelExportService
         ];
 
         $arabic = [
-            'title' => 'طلبات تسجيل الحرفيين — ركيزة',
+            'title' => 'طلبات تسجيل الحرفيين ركيزة',
             'status' => 'الحالة',
             'all' => 'الكل',
             'exported_at' => 'تاريخ التصدير',

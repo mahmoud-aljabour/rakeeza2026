@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\CraftsmanStatus;
 use App\Models\Craftsman;
 use App\Models\CraftsmanNote;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,18 @@ final class CraftsmanService
             ->when($status instanceof CraftsmanStatus, fn ($query) => $query->where('status', $status))
             ->latest()
             ->get();
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Craftsman>
+     */
+    public function paginate(?CraftsmanStatus $status = null, int $perPage = 10): LengthAwarePaginator
+    {
+        return Craftsman::query()
+            ->with('notes')
+            ->when($status instanceof CraftsmanStatus, fn ($query) => $query->where('status', $status))
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**
@@ -41,7 +54,7 @@ final class CraftsmanService
     }
 
     /**
-     * @param  array{name: string, phone: string, city: string, specialty: string, experience_years?: int, has_tools?: bool, bio?: string|null, status?: CraftsmanStatus|string}  $data
+     * @param  array{name: string, national_id: string, phone: string, city: string, specialty: list<string>, experience_years?: int, has_tools?: bool, bio?: string|null, status?: CraftsmanStatus|string}  $data
      */
     public function create(array $data): Craftsman
     {

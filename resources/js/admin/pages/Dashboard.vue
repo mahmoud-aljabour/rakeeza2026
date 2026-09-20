@@ -2,10 +2,17 @@
 import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import axios from 'axios';
+import { useAuth } from '../composables/useAuth';
 import { useLocale } from '../composables/useLocale';
 
 const { t, locale } = useLocale();
+const { state: auth } = useAuth();
 const stats = ref(null);
+
+const welcomeTitle = computed(() => t('dashboard.title', {
+    name: auth.user?.name || t('brand'),
+}));
+
 
 onMounted(async () => {
     const { data } = await axios.get('/api/admin/stats');
@@ -24,6 +31,40 @@ const recentCraftsmen = computed(() => stats.value?.recent_craftsmen ?? []);
 
 function leadStatus(value) {
     return t(`leads.${value}`);
+}
+
+function leadServiceTitles(lead) {
+    const titles = Array.isArray(lead.services)
+        ? lead.services.map((service) => service.title).filter(Boolean)
+        : [];
+
+    if (titles.length) {
+        return titles;
+    }
+
+    if (lead.service?.title) {
+        return [lead.service.title];
+    }
+
+    return [t('leads.general')];
+}
+
+function specialtyList(value) {
+    if (Array.isArray(value)) {
+        return value.filter((specialty) => typeof specialty === 'string' && specialty.trim());
+    }
+
+    if (typeof value !== 'string' || !value.trim()) {
+        return [];
+    }
+
+    try {
+        const decoded = JSON.parse(value);
+
+        return Array.isArray(decoded) ? specialtyList(decoded) : [value];
+    } catch {
+        return [value];
+    }
 }
 
 function craftsmanStatus(value) {
@@ -60,9 +101,9 @@ function statusClass(value) {
 
 <template>
     <section class="space-y-6">
-        <div class="rounded-3xl bg-gradient-to-l from-primary-dark via-primary to-primary-light p-6 text-white shadow-lg ltr:bg-gradient-to-r">
-            <h2 class="text-2xl font-black">{{ t('dashboard.title') }}</h2>
-            <p class="mt-2 max-w-2xl text-slate-200">{{ t('dashboard.text') }}</p>
+        <div>
+            <h2 class="text-2xl font-black text-primary">{{ welcomeTitle }}</h2>
+            <p class="mt-1 text-sm text-slate-500">{{ t('dashboard.text') }}</p>
         </div>
 
         <div v-if="stats" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -90,12 +131,29 @@ function statusClass(value) {
                 </div>
                 <ul v-if="recentLeads.length" class="divide-y divide-slate-100">
                     <li v-for="lead in recentLeads" :key="lead.id" class="flex items-start justify-between gap-3 px-5 py-4">
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="truncate font-extrabold text-primary">{{ lead.name }}</p>
-                            <p class="mt-1 truncate text-sm text-slate-500">
-                                <a :href="`tel:${lead.phone}`" class="font-bold hover:text-primary" dir="ltr">{{ lead.phone }}</a>
-                                <span> · {{ lead.service?.title || t('leads.general') }}</span>
-                            </p>
+                            <a
+                                :href="`tel:${lead.phone}`"
+                                class="mt-1 inline-flex text-sm font-bold text-slate-600 hover:text-primary"
+                                dir="ltr"
+                            >{{ lead.phone }}</a>
+                            <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span
+                                    v-for="title in leadServiceTitles(lead).slice(0, 2)"
+                                    :key="`${lead.id}-${title}`"
+                                    class="inline-flex max-w-[12rem] truncate rounded-full bg-primary/8 px-2.5 py-1 text-xs font-extrabold text-primary"
+                                >
+                                    {{ title }}
+                                </span>
+                                <span
+                                    v-if="leadServiceTitles(lead).length > 2"
+                                    class="inline-flex min-w-7 items-center justify-center rounded-full bg-accent/15 px-2 py-1 text-xs font-black text-accent"
+                                    :title="leadServiceTitles(lead).slice(2).join(locale === 'en' ? ', ' : '، ')"
+                                >
+                                    +{{ leadServiceTitles(lead).length - 2 }}
+                                </span>
+                            </div>
                         </div>
                         <div class="shrink-0 text-end">
                             <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold" :class="statusClass(lead.status)">
@@ -117,12 +175,35 @@ function statusClass(value) {
                 </div>
                 <ul v-if="recentCraftsmen.length" class="divide-y divide-slate-100">
                     <li v-for="item in recentCraftsmen" :key="item.id" class="flex items-start justify-between gap-3 px-5 py-4">
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="truncate font-extrabold text-primary">{{ item.name }}</p>
-                            <p class="mt-1 truncate text-sm text-slate-500">
-                                <a :href="`tel:${item.phone}`" class="font-bold hover:text-primary" dir="ltr">{{ item.phone }}</a>
-                                <span> · {{ item.specialty }} · {{ item.city }}</span>
-                            </p>
+                            <a
+                                :href="`tel:${item.phone}`"
+                                class="mt-1 inline-flex text-sm font-bold text-slate-600 hover:text-primary"
+                                dir="ltr"
+                            >{{ item.phone }}</a>
+                            <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span
+                                    v-if="item.city"
+                                    class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-extrabold text-slate-600"
+                                >
+                                    {{ item.city }}
+                                </span>
+                                <span
+                                    v-for="specialty in specialtyList(item.specialty).slice(0, 2)"
+                                    :key="`${item.id}-${specialty}`"
+                                    class="inline-flex max-w-[10rem] truncate rounded-full bg-primary/8 px-2.5 py-1 text-xs font-extrabold text-primary"
+                                >
+                                    {{ specialty }}
+                                </span>
+                                <span
+                                    v-if="specialtyList(item.specialty).length > 2"
+                                    class="inline-flex min-w-7 items-center justify-center rounded-full bg-accent/15 px-2 py-1 text-xs font-black text-accent"
+                                    :title="specialtyList(item.specialty).slice(2).join(locale === 'en' ? ', ' : '، ')"
+                                >
+                                    +{{ specialtyList(item.specialty).length - 2 }}
+                                </span>
+                            </div>
                         </div>
                         <div class="shrink-0 text-end">
                             <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-extrabold" :class="statusClass(item.status)">

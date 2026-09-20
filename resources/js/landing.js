@@ -47,6 +47,24 @@
         })();
 
         (function () {
+            var languageMenu = document.querySelector('.language-menu');
+            if (!languageMenu) return;
+
+            document.addEventListener('click', function (event) {
+                if (!languageMenu.contains(event.target)) {
+                    languageMenu.removeAttribute('open');
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && languageMenu.open) {
+                    languageMenu.removeAttribute('open');
+                    languageMenu.querySelector('summary').focus();
+                }
+            });
+        })();
+
+        (function () {
             var links = Array.prototype.slice.call(document.querySelectorAll('#main-nav a[href^="#"], .nav-cta'));
             if (!links.length) return;
 
@@ -120,12 +138,76 @@
             var note = document.getElementById('contact-form-note');
             if (!form) return;
 
-            var serviceSelect = document.getElementById('contact-service');
+            var serviceDropdown = document.getElementById('contact-service');
+            var serviceSummary = form.querySelector('.service-multiselect-label');
+            var serviceInputs = Array.from(form.querySelectorAll('input[name="service_ids[]"]'));
             var params = new URLSearchParams(window.location.search);
             var preselected = params.get('service');
-            if (preselected && serviceSelect) {
-                serviceSelect.value = preselected;
+
+            function updateServiceSummary() {
+                if (!serviceSummary) return;
+
+                var selected = serviceInputs.filter(function (input) {
+                    return input.checked;
+                });
+
+                if (!selected.length) {
+                    serviceSummary.textContent = serviceSummary.getAttribute('data-placeholder') || '';
+                    return;
+                }
+
+                if (selected.length === 1) {
+                    var optionLabel = selected[0].closest('.service-choice');
+                    serviceSummary.textContent = optionLabel
+                        ? optionLabel.textContent.trim()
+                        : selected[0].value;
+                    return;
+                }
+
+                serviceSummary.textContent = (serviceSummary.getAttribute('data-count-label') || ':count')
+                    .replace(':count', String(selected.length));
             }
+
+            if (preselected) {
+                var preselectedInput = serviceInputs.find(function (input) {
+                    return input.value === preselected;
+                });
+                if (preselectedInput) {
+                    preselectedInput.checked = true;
+                }
+            }
+
+            serviceInputs.forEach(function (input) {
+                input.addEventListener('change', function () {
+                    if (input.checked && input.value === 'general') {
+                        serviceInputs.forEach(function (item) {
+                            if (item !== input) item.checked = false;
+                        });
+                    } else if (input.checked) {
+                        var generalInput = serviceInputs.find(function (item) {
+                            return item.value === 'general';
+                        });
+                        if (generalInput) generalInput.checked = false;
+                    }
+
+                    updateServiceSummary();
+                });
+            });
+
+            updateServiceSummary();
+
+            document.addEventListener('click', function (event) {
+                if (serviceDropdown && serviceDropdown.open && !serviceDropdown.contains(event.target)) {
+                    serviceDropdown.open = false;
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && serviceDropdown && serviceDropdown.open) {
+                    serviceDropdown.open = false;
+                    serviceDropdown.querySelector('summary')?.focus();
+                }
+            });
 
             function setButtonLoading(button, loading, i18n) {
                 if (!button) return;
@@ -140,7 +222,7 @@
                         : (button.getAttribute('data-default-label') || i18n.sendRequest || 'إرسال الطلب');
                 }
                 if (icon) {
-                    icon.className = loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-envelope';
+                    icon.className = loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-paper-plane';
                 }
             }
 
@@ -158,7 +240,11 @@
                 var phone = (document.getElementById('contact-phone').value || '').trim();
                 var emailInput = document.getElementById('contact-email');
                 var email = emailInput ? (emailInput.value || '').trim() : '';
-                var serviceValue = serviceSelect ? (serviceSelect.value || '') : '';
+                var serviceIds = serviceInputs
+                    .filter(function (input) { return input.checked; })
+                    .map(function (input) {
+                        return input.value === 'general' ? 'general' : Number(input.value);
+                    });
                 var message = (document.getElementById('contact-message').value || '').trim();
                 var honeypot = document.getElementById('contact-website');
                 var token = document.querySelector('meta[name="csrf-token"]');
@@ -171,7 +257,7 @@
                     note.textContent = '';
                 }
 
-                if (!name || !phone || !email || !serviceValue || !message) {
+                if (!name || !phone || !email || !serviceIds.length || !message) {
                     if (note) {
                         note.textContent = i18n.requiredFields || 'يرجى تعبئة جميع الحقول المطلوبة.';
                         note.classList.add('is-visible', 'is-error');
@@ -183,7 +269,7 @@
                     name: name,
                     phone: phone,
                     email: email,
-                    service_id: serviceValue === '' ? null : (serviceValue === 'general' ? 'general' : Number(serviceValue)),
+                    service_ids: serviceIds,
                     message: message,
                     website: honeypot ? honeypot.value : '',
                 };
@@ -210,14 +296,23 @@
                     var succeeded = result.ok && result.data && result.data.success !== false;
                     if (note) {
                         note.textContent = succeeded
-                            ? ((result.data && result.data.message) || i18n.emailSuccess || 'تم إرسال طلبك بنجاح، سيتواصل معك فريق ركيزة قريباً')
+                            ? ((result.data && result.data.message) || i18n.submissionSuccess || 'شكراً لتواصلكم. تم استلام طلبكم بنجاح، وسيتواصل معكم فريق ركيزة قريباً.')
                             : (firstError(result.data) || i18n.sendFailed || 'تعذر إرسال الطلب. حاول مرة أخرى.');
                         note.classList.add('is-visible', succeeded ? 'is-success' : 'is-error');
                     }
                     if (succeeded) {
                         form.reset();
-                        if (serviceSelect && preselected) {
-                            serviceSelect.value = preselected;
+                        if (preselected) {
+                            var resetPreselectedInput = serviceInputs.find(function (input) {
+                                return input.value === preselected;
+                            });
+                            if (resetPreselectedInput) {
+                                resetPreselectedInput.checked = true;
+                            }
+                        }
+                        updateServiceSummary();
+                        if (serviceDropdown) {
+                            serviceDropdown.open = false;
                         }
                     }
                 }).catch(function () {
@@ -236,57 +331,109 @@
             var note = document.getElementById('craftsman-form-note');
             if (!form) return;
 
-            function openCraftsmanWhatsApp(payload) {
-                var whatsapp = (form.getAttribute('data-whatsapp') || '').replace(/\D/g, '');
-                if (!whatsapp) return;
+            var specialtyDropdown = document.getElementById('craftsman-specialty');
+            var specialtySummary = form.querySelector('#craftsman-specialty .service-multiselect-label');
+            var specialtyInputs = Array.from(form.querySelectorAll('input[name="specialties[]"]'));
 
-                var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
-                var lines = [
-                    i18n.craftsmanWhatsappIntro || 'مرحباً ركيزة، أود الانضمام كحرفي.',
-                    '',
-                    (i18n.craftsmanLabelName || 'الاسم') + ': ' + payload.name,
-                    (i18n.craftsmanLabelPhone || 'الجوال') + ': ' + payload.phone,
-                    (i18n.craftsmanLabelCity || 'المدينة') + ': ' + payload.city,
-                    (i18n.craftsmanLabelSpecialty || 'التخصص') + ': ' + payload.specialty,
-                    (i18n.craftsmanLabelExperience || 'سنوات الخبرة') + ': ' + payload.experience_years,
-                    (i18n.craftsmanLabelTools || 'معدات خاصة') + ': ' + (payload.has_tools
-                        ? (i18n.craftsmanYes || 'نعم')
-                        : (i18n.craftsmanNo || 'لا')),
-                ];
+            function updateSpecialtySummary() {
+                if (!specialtySummary) return;
 
-                if (payload.bio) {
-                    lines.push((i18n.craftsmanLabelBio || 'نبذة') + ': ' + payload.bio);
+                var selected = specialtyInputs.filter(function (input) {
+                    return input.checked;
+                });
+
+                if (!selected.length) {
+                    specialtySummary.textContent = specialtySummary.getAttribute('data-placeholder') || '';
+                    return;
                 }
 
-                var url = 'https://wa.me/' + whatsapp + '?text=' + encodeURIComponent(lines.join('\n'));
-                window.open(url, '_blank', 'noopener,noreferrer');
+                if (selected.length === 1) {
+                    var optionLabel = selected[0].closest('.service-choice');
+                    specialtySummary.textContent = optionLabel
+                        ? optionLabel.textContent.trim()
+                        : selected[0].value;
+                    return;
+                }
+
+                specialtySummary.textContent = (specialtySummary.getAttribute('data-count-label') || ':count')
+                    .replace(':count', String(selected.length));
+            }
+
+            specialtyInputs.forEach(function (input) {
+                input.addEventListener('change', updateSpecialtySummary);
+            });
+
+            updateSpecialtySummary();
+
+            document.addEventListener('click', function (event) {
+                if (specialtyDropdown && specialtyDropdown.open && !specialtyDropdown.contains(event.target)) {
+                    specialtyDropdown.open = false;
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && specialtyDropdown && specialtyDropdown.open) {
+                    specialtyDropdown.open = false;
+                    specialtyDropdown.querySelector('summary')?.focus();
+                }
+            });
+
+            function setCraftsmanButtonLoading(button, loading, i18n) {
+                if (!button) return;
+
+                var label = button.querySelector('span');
+                var icon = button.querySelector('i');
+                button.disabled = loading;
+                button.classList.toggle('is-loading', loading);
+                button.setAttribute('aria-busy', loading ? 'true' : 'false');
+
+                if (label) {
+                    label.textContent = loading
+                        ? (button.getAttribute('data-loading-label') || i18n.sending || 'جاري الإرسال...')
+                        : (button.getAttribute('data-default-label') || 'إرسال طلب الانضمام');
+                }
+
+                if (icon) {
+                    icon.className = loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-paper-plane';
+                }
             }
 
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
-                var name = (document.getElementById('craftsman-name').value || '').trim();
+                var firstName = (document.getElementById('craftsman-first-name').value || '').trim();
+                var fatherName = (document.getElementById('craftsman-father-name').value || '').trim();
+                var grandfatherName = (document.getElementById('craftsman-grandfather-name').value || '').trim();
+                var familyName = (document.getElementById('craftsman-family-name').value || '').trim();
+                var nationalId = (document.getElementById('craftsman-national-id').value || '').trim();
                 var phone = (document.getElementById('craftsman-phone').value || '').trim();
                 var city = (document.getElementById('craftsman-city').value || '').trim();
-                var specialtySelect = document.getElementById('craftsman-specialty');
-                var specialty = specialtySelect ? specialtySelect.value || '' : '';
-                var specialtyLabel = specialty;
-                if (specialtySelect && specialtySelect.selectedIndex >= 0) {
-                    specialtyLabel = (specialtySelect.options[specialtySelect.selectedIndex].text || specialty).trim();
-                }
+                var selectedSpecialties = specialtyInputs.filter(function (input) {
+                    return input.checked;
+                });
+                var specialties = selectedSpecialties.map(function (input) {
+                    return input.value;
+                });
                 var experience = Number(document.getElementById('craftsman-experience').value || 0);
-                var hasTools = document.getElementById('craftsman-tools').checked;
+                var selectedTools = form.querySelector('input[name="has_tools"]:checked');
+                var hasTools = selectedTools ? selectedTools.value === '1' : null;
                 var bio = (document.getElementById('craftsman-bio').value || '').trim();
+                var honeypot = document.getElementById('craftsman-website');
                 var token = document.querySelector('meta[name="csrf-token"]');
                 var button = form.querySelector('button[type="submit"]');
                 var i18n = (window.Rakeeza && window.Rakeeza.i18n) || {};
                 var payload = {
-                    name: name,
+                    first_name: firstName,
+                    father_name: fatherName,
+                    grandfather_name: grandfatherName,
+                    family_name: familyName,
+                    national_id: nationalId,
                     phone: phone,
                     city: city,
-                    specialty: specialty,
+                    specialties: specialties,
                     experience_years: experience,
                     has_tools: hasTools,
                     bio: bio,
+                    website: honeypot ? honeypot.value : '',
                 };
 
                 if (note) {
@@ -294,7 +441,17 @@
                     note.textContent = '';
                 }
 
-                if (button) button.disabled = true;
+                if (!specialties.length) {
+                    if (note) {
+                        note.textContent = i18n.requiredFields || 'يرجى اختيار تخصص واحد على الأقل.';
+                        note.classList.add('is-visible', 'is-error');
+                    }
+                    specialtyDropdown.open = true;
+                    specialtyDropdown.querySelector('summary')?.focus();
+                    return;
+                }
+
+                setCraftsmanButtonLoading(button, true, i18n);
 
                 fetch(form.getAttribute('action') || '/craftsman', {
                     method: 'POST',
@@ -315,18 +472,11 @@
                     .then(function (result) {
                         if (!note) return;
                         if (result.ok) {
-                            note.textContent = i18n.craftsmanWhatsappReady || result.data.message || i18n.craftsmanSuccess || 'تم استلام طلبك بنجاح.';
+                            note.textContent = result.data.message || i18n.craftsmanSuccess || 'تم استلام طلبك بنجاح.';
                             note.classList.add('is-visible', 'is-success');
-                            openCraftsmanWhatsApp({
-                                name: name,
-                                phone: phone,
-                                city: city,
-                                specialty: specialtyLabel,
-                                experience_years: experience,
-                                has_tools: hasTools,
-                                bio: bio,
-                            });
                             form.reset();
+                            updateSpecialtySummary();
+                            specialtyDropdown.open = false;
                         } else {
                             var firstError = result.data.errors
                                 ? Object.values(result.data.errors)[0][0]
@@ -342,7 +492,7 @@
                         }
                     })
                     .finally(function () {
-                        if (button) button.disabled = false;
+                        setCraftsmanButtonLoading(button, false, i18n);
                     });
             });
         })();
@@ -521,7 +671,6 @@
                 })();
 
                 revealOnScroll('.craftsman-banner', { y: 40, opacity: 0 }, { trigger: '.craftsman-banner', start: 'top 90%', duration: 0.85 });
-                revealOnScroll('.vision-card', { y: 40, opacity: 0 }, { trigger: '.vision-card', start: 'top 92%', ease: 'power2.out' });
                 revealOnScroll('#projects .section-title', { y: 36, opacity: 0 }, { trigger: '#projects .section-header', start: 'top 90%' });
                 revealOnScroll('.project-card', { y: 56, opacity: 0 }, {
                     trigger: '#projects',

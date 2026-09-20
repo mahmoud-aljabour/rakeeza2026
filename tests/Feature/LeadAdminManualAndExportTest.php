@@ -46,6 +46,33 @@ final class LeadAdminManualAndExportTest extends TestCase
         ]);
     }
 
+    public function test_admin_leads_index_is_paginated_ten_per_page(): void
+    {
+        $user = User::factory()->create();
+
+        foreach (range(1, 12) as $index) {
+            Lead::query()->create([
+                'name' => "عميل {$index}",
+                'phone' => sprintf('059%07d', $index),
+                'status' => LeadStatus::Pending,
+            ]);
+        }
+
+        $this->actingAs($user)
+            ->getJson('/api/admin/leads?per_page=10')
+            ->assertOk()
+            ->assertJsonPath('per_page', 10)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('total', 12)
+            ->assertJsonCount(10, 'data');
+
+        $this->actingAs($user)
+            ->getJson('/api/admin/leads?page=2&per_page=10')
+            ->assertOk()
+            ->assertJsonPath('current_page', 2)
+            ->assertJsonCount(2, 'data');
+    }
+
     public function test_admin_can_export_leads_as_excel(): void
     {
         $user = User::factory()->create();
@@ -70,6 +97,7 @@ final class LeadAdminManualAndExportTest extends TestCase
         $this->assertSheetDirection($path, rightToLeft: true);
         $this->assertXlsxContains($path, 'طلبات العملاء');
         $this->assertXlsxContains($path, 'الاسم');
+        $this->assertXlsxDoesNotContain($path, '—');
         unlink($path);
     }
 
@@ -151,5 +179,16 @@ final class LeadAdminManualAndExportTest extends TestCase
             str_contains($sheetXml, $needle) || str_contains($shared, $needle),
             "Failed asserting that the workbook contains \"{$needle}\".",
         );
+    }
+
+    private function assertXlsxDoesNotContain(string $xlsxPath, string $needle): void
+    {
+        $zip = new ZipArchive;
+        $this->assertTrue($zip->open($xlsxPath) === true);
+        $sheetXml = (string) $zip->getFromName('xl/worksheets/sheet1.xml');
+        $shared = (string) ($zip->getFromName('xl/sharedStrings.xml') ?: '');
+        $zip->close();
+
+        $this->assertStringNotContainsString($needle, $sheetXml.$shared);
     }
 }

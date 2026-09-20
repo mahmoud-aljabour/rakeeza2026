@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'phone', 'city', 'specialty', 'experience_years', 'has_tools', 'bio', 'status'])]
+#[Fillable(['name', 'national_id', 'phone', 'city', 'specialty', 'experience_years', 'has_tools', 'bio', 'status'])]
 class Craftsman extends Model
 {
     /**

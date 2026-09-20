@@ -58,16 +58,48 @@ final class LeadStatusNotesTest extends TestCase
         $this->actingAs($user)
             ->patchJson("/api/admin/leads/{$lead->id}", [
                 'status' => 'completed',
+                'completed_price' => '275.50',
                 'note' => 'تم إنجاز الطلب.',
             ])
             ->assertOk()
-            ->assertJsonPath('status', 'completed');
+            ->assertJsonPath('status', 'completed')
+            ->assertJsonPath('completed_price', '275.50');
+
+        $this->assertDatabaseHas('leads', [
+            'id' => $lead->id,
+            'status' => LeadStatus::Completed->value,
+            'completed_price' => '275.50',
+        ]);
+        $this->assertNotNull($lead->refresh()->completed_at);
 
         $this->actingAs($user)
             ->getJson('/api/admin/leads')
             ->assertOk()
-            ->assertJsonPath('0.id', $lead->id)
-            ->assertJsonPath('0.status', 'completed')
-            ->assertJsonPath('0.notes.0.note', 'تم إنجاز الطلب.');
+            ->assertJsonPath('data.0.id', $lead->id)
+            ->assertJsonPath('data.0.status', 'completed')
+            ->assertJsonPath('data.0.notes.0.note', 'تم إنجاز الطلب.');
+    }
+
+    public function test_completed_status_requires_a_price(): void
+    {
+        $user = User::factory()->create();
+        $lead = Lead::query()->create([
+            'name' => 'سارة',
+            'phone' => '0597111111',
+            'status' => LeadStatus::Contacted,
+        ]);
+
+        $this->actingAs($user)
+            ->patchJson("/api/admin/leads/{$lead->id}", [
+                'status' => 'completed',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('completed_price');
+
+        $this->assertDatabaseHas('leads', [
+            'id' => $lead->id,
+            'status' => LeadStatus::Contacted->value,
+            'completed_price' => null,
+        ]);
     }
 }

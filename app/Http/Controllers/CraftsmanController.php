@@ -19,11 +19,18 @@ final class CraftsmanController extends Controller
             'site' => $settings->publicSite(),
             'services' => $services->listActive(),
             'specialties' => $this->specialties($services),
+            'cities' => StoreCraftsmanRequest::CITIES,
         ]);
     }
 
     public function store(StoreCraftsmanRequest $request, CraftsmanService $craftsmen): JsonResponse
     {
+        if (filled($request->input('website'))) {
+            return response()->json([
+                'message' => __('site.craftsman.success'),
+            ]);
+        }
+
         $craftsman = $craftsmen->create($request->craftsmanPayload());
 
         return response()->json([

@@ -91,7 +91,7 @@
                     <form class="contact-form-card" id="contact-form" action="{{ route('leads.store') }}" method="POST">
                         @csrf
                         <h3>{{ __('site.contact.form_title') }}</h3>
-                        <p>{{ __('site.contact.form_email_intro') }}</p>
+                        <p>{{ __('site.contact.form_dashboard_intro') }}</p>
                         <div class="hp-field" aria-hidden="true">
                             <label for="contact-website">Website</label>
                             <input id="contact-website" name="website" type="text" tabindex="-1" autocomplete="off">
@@ -110,21 +110,38 @@
                             <label for="contact-email">{{ __('site.contact.email_field') }}</label>
                             <input id="contact-email" name="email" type="email" required autocomplete="email" inputmode="email" maxlength="255" placeholder="{{ __('site.contact.email_placeholder') }}" dir="ltr">
                         </div>
-                        <div class="form-field">
-                            <label for="contact-service">{{ __('site.contact.service') }}</label>
-                            <select id="contact-service" name="service_id" required>
-                                @foreach ($services as $item)
-                                    <option value="{{ $item->id }}" @selected($item->id === $service->id)>{{ $item->displayTitle() }}</option>
-                                @endforeach
-                                <option value="general">{{ __('site.contact.general_inquiry') }}</option>
-                            </select>
-                        </div>
+                        <fieldset class="form-field">
+                            <legend>{{ __('site.contact.service') }}</legend>
+                            <p class="form-field-hint">{{ __('site.contact.service_multiple_hint') }}</p>
+                            <details class="service-multiselect" id="contact-service">
+                                <summary>
+                                    <span
+                                        class="service-multiselect-label"
+                                        data-placeholder="{{ __('site.contact.service_placeholder') }}"
+                                        data-count-label="{{ __('site.contact.service_selected_count') }}"
+                                    >{{ __('site.contact.service_placeholder') }}</span>
+                                    <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                                </summary>
+                                <div class="service-choice-grid">
+                                    @foreach ($services as $item)
+                                        <label class="service-choice">
+                                            <input type="checkbox" name="service_ids[]" value="{{ $item->id }}" @checked($item->id === $service->id)>
+                                            <span>{{ $item->displayTitle() }}</span>
+                                        </label>
+                                    @endforeach
+                                    <label class="service-choice">
+                                        <input type="checkbox" name="service_ids[]" value="general">
+                                        <span>{{ __('site.contact.general_inquiry') }}</span>
+                                    </label>
+                                </div>
+                            </details>
+                        </fieldset>
                         <div class="form-field">
                             <label for="contact-message">{{ __('site.contact.details') }}</label>
                             <textarea id="contact-message" name="message" required maxlength="1000" placeholder="{{ __('site.contact.details_placeholder') }}"></textarea>
                         </div>
                         <button type="submit" class="btn-primary" data-default-label="{{ __('site.contact.send_request') }}" data-loading-label="{{ __('site.contact.sending') }}">
-                            <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
                             <span>{{ __('site.contact.send_request') }}</span>
                         </button>
                         <p class="form-note" id="contact-form-note" role="status"></p>

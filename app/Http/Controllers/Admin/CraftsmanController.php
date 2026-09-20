@@ -23,8 +23,9 @@ final class CraftsmanController extends Controller
     public function index(Request $request): JsonResponse
     {
         $status = CraftsmanStatus::tryFrom((string) $request->query('status', ''));
+        $perPage = min(50, max(5, $request->integer('per_page', 10)));
 
-        return response()->json($this->craftsmen->list($status));
+        return response()->json($this->craftsmen->paginate($status, $perPage));
     }
 
     public function export(Request $request): BinaryFileResponse

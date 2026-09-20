@@ -136,7 +136,7 @@ final class LeadExcelExportService
     private function copy(string $key, string $locale): string
     {
         $english = [
-            'title' => 'Customer leads — Rakeeza',
+            'title' => 'Customer leads Rakeeza',
             'status' => 'Status',
             'all' => 'All',
             'exported_at' => 'Exported at',
@@ -144,7 +144,7 @@ final class LeadExcelExportService
         ];
 
         $arabic = [
-            'title' => 'طلبات العملاء — ركيزة',
+            'title' => 'طلبات العملاء ركيزة',
             'status' => 'الحالة',
             'all' => 'الكل',
             'exported_at' => 'تاريخ التصدير',

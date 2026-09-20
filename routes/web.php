@@ -21,9 +21,13 @@ Route::post('/leads', [LeadController::class, 'store'])
     ->name('leads.store');
 
 Route::get('/craftsman', [CraftsmanController::class, 'create'])->name('craftsman.create');
-Route::post('/craftsman', [CraftsmanController::class, 'store'])->name('craftsman.store');
+Route::post('/craftsman', [CraftsmanController::class, 'store'])
+    ->middleware('throttle:quote-requests')
+    ->name('craftsman.store');
 
-Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])
+    ->middleware('throttle:admin-login')
+    ->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::view('/admin/{any?}', 'admin')

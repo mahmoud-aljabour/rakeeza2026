@@ -48,6 +48,29 @@ final class AdminServiceAuthTest extends TestCase
             ->assertJsonPath('image_url', 'https://example.com/service.jpg');
     }
 
+    public function test_logged_in_admin_can_update_a_service(): void
+    {
+        $user = User::factory()->create();
+        $service = Service::factory()->create([
+            'title' => 'الخدمة القديمة',
+        ]);
+
+        $this->actingAs($user)
+            ->putJson("/api/admin/services/{$service->id}", [
+                'title' => 'الخدمة المحدثة',
+                'description' => 'الوصف المحدث',
+                'is_active' => true,
+            ])
+            ->assertOk()
+            ->assertJsonPath('title', 'الخدمة المحدثة');
+
+        $this->assertDatabaseHas('services', [
+            'id' => $service->id,
+            'title' => 'الخدمة المحدثة',
+            'description' => 'الوصف المحدث',
+        ]);
+    }
+
     public function test_image_url_must_be_http_or_local_images_path(): void
     {
         $user = User::factory()->create();

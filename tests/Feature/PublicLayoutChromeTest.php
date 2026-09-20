@@ -22,6 +22,9 @@ final class PublicLayoutChromeTest extends TestCase
             ->assertSee('footer-grid', false)
             ->assertSee('floating-whatsapp', false)
             ->assertSee('انضم إلينا كحرفي', false)
+            ->assertSee('fa-user-gear', false)
+            ->assertDontSee('vision-card', false)
+            ->assertDontSee('رؤيتنا', false)
             ->assertSee('lang-switch', false)
             ->assertSee('lang="en"', false)
             ->assertSee('>الإنجليزية</span>', false);
@@ -49,7 +52,7 @@ final class PublicLayoutChromeTest extends TestCase
             ->assertSee('menu-toggle', false)
             ->assertSee('footer-grid', false)
             ->assertSee('floating-whatsapp', false)
-            ->assertSee('تسجيل الحرفيين', false)
+            ->assertSee('تسجيل كحرفي', false)
             ->assertSee('تواصل معنا', false);
     }
 }

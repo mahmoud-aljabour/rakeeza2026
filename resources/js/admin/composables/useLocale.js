@@ -58,9 +58,11 @@ export function useLocale() {
             return key;
         }
 
-        Object.entries(params).forEach(([name, value]) => {
-            text = text.replaceAll(`:${name}`, String(value));
-        });
+        Object.entries(params)
+            .sort(([left], [right]) => right.length - left.length)
+            .forEach(([name, value]) => {
+                text = text.replaceAll(`:${name}`, String(value));
+            });
 
         return text;
     }

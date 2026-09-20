@@ -32,5 +32,16 @@ class AppServiceProvider extends ServiceProvider
                     ], 429);
                 });
         });
+
+        RateLimiter::for('admin-login', function (Request $request) {
+            return Limit::perMinute(5)
+                ->by($request->ip())
+                ->after(static fn ($response): bool => $response->getStatusCode() === 422)
+                ->response(function () {
+                    return response()->json([
+                        'message' => __('site.auth.rate_limited'),
+                    ], 429);
+                });
+        });
     }
 }

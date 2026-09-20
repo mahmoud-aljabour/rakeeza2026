@@ -1,9 +1,10 @@
 <script setup>
+import { computed } from 'vue';
 import { useLocale } from '../composables/useLocale';
 
 const { t } = useLocale();
 
-defineProps({
+const props = defineProps({
     page: {
         type: Number,
         required: true,
@@ -28,50 +29,60 @@ defineProps({
 
 const emit = defineEmits(['change']);
 
-function pages(current, last) {
-    const items = [];
-    const start = Math.max(1, current - 2);
-    const end = Math.min(last, current + 2);
+const showControls = computed(() => props.lastPage > 1);
+const canGoPrevious = computed(() => props.page > 1);
+const canGoNext = computed(() => props.page < props.lastPage);
 
-    for (let value = start; value <= end; value += 1) {
-        items.push(value);
-    }
-
-    return items;
-}
+const summary = computed(() => t('common.showing', {
+    from: props.from,
+    to: props.to,
+    total: props.total,
+}));
 </script>
 
 <template>
-    <div v-if="total > 0" class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm font-bold text-slate-500">
-            {{ t('common.showing', { from, to, total }) }}
+    <div
+        v-if="total > 0"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+    >
+        <p class="inline-flex items-center gap-2 text-sm font-bold text-slate-500">
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-primary/8 text-primary">
+                <i class="fa-solid fa-list-ol text-[12px]" aria-hidden="true"></i>
+            </span>
+            <span>
+                {{ t('common.showing_prefix') }}
+                <span class="mx-1 font-black text-primary">{{ from }}</span>
+                <span class="text-slate-400">{{ t('common.showing_separator') }}</span>
+                <span class="mx-1 font-black text-primary">{{ to }}</span>
+                <span class="text-slate-400">{{ t('common.showing_of') }}</span>
+                <span class="mx-1 font-black text-primary">{{ total }}</span>
+            </span>
+            <span class="sr-only">{{ summary }}</span>
         </p>
-        <div v-if="lastPage > 1" class="flex flex-wrap items-center gap-1">
+
+        <div v-if="showControls" class="flex flex-wrap items-center gap-2">
             <button
                 type="button"
-                class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-primary disabled:opacity-40"
-                :disabled="page <= 1"
+                class="inline-flex h-10 min-w-[7.5rem] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-extrabold text-primary transition hover:border-primary/30 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="!canGoPrevious"
+                :aria-label="t('common.previous')"
                 @click="emit('change', page - 1)"
             >
+                <i class="fa-solid fa-chevron-left text-[11px] rtl:rotate-180" aria-hidden="true"></i>
                 {{ t('common.previous') }}
             </button>
-            <button
-                v-for="item in pages(page, lastPage)"
-                :key="item"
-                type="button"
-                class="min-w-9 rounded-xl px-3 py-2 text-xs font-extrabold"
-                :class="item === page ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-primary'"
-                @click="emit('change', item)"
-            >
-                {{ item }}
-            </button>
+            <span class="inline-flex h-10 min-w-[4.5rem] items-center justify-center rounded-xl bg-primary px-3 text-sm font-black text-white">
+                {{ page }} / {{ lastPage }}
+            </span>
             <button
                 type="button"
-                class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-primary disabled:opacity-40"
-                :disabled="page >= lastPage"
+                class="inline-flex h-10 min-w-[7.5rem] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-extrabold text-primary transition hover:border-primary/30 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="!canGoNext"
+                :aria-label="t('common.next')"
                 @click="emit('change', page + 1)"
             >
                 {{ t('common.next') }}
+                <i class="fa-solid fa-chevron-right text-[11px] rtl:rotate-180" aria-hidden="true"></i>
             </button>
         </div>
     </div>

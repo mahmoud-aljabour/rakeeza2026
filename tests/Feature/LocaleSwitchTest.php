@@ -19,6 +19,10 @@ final class LocaleSwitchTest extends TestCase
             ->assertSee('lang="ar"', false)
             ->assertSee('dir="rtl"', false)
             ->assertSee('الرئيسية', false)
+            ->assertSee('fa-language', false)
+            ->assertSee('اختيار لغة الموقع', false)
+            ->assertSee('href="'.route('locale.switch', 'ar').'"', false)
+            ->assertSee('href="'.route('locale.switch', 'en').'"', false)
             ->assertSee('>الإنجليزية</span>', false);
     }
 
@@ -39,6 +43,7 @@ final class LocaleSwitchTest extends TestCase
             ->assertSee('Join as craftsman', false)
             ->assertSee('Practical restoration and facility solutions', false)
             ->assertSee('All rights reserved.', false)
+            ->assertSee('Choose website language', false)
             ->assertSee('>العربية</span>', false)
             ->assertDontSee('خدماتنا الشاملة', false);
     }

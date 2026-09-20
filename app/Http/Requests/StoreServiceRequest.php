@@ -7,7 +7,7 @@ namespace App\Http\Requests;
 use App\Support\PublicImage;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class StoreServiceRequest extends FormRequest
+class StoreServiceRequest extends FormRequest
 {
     public function authorize(): bool
     {

@@ -10,6 +10,6 @@
     <p><strong>الجوال:</strong> <span dir="ltr">{{ $lead->phone }}</span></p>
     <p><strong>الخدمة:</strong> {{ $lead->service?->title ?? 'استفسار عام' }}</p>
     <p><strong>التفاصيل:</strong></p>
-    <p>{{ $lead->message ?: '—' }}</p>
+    <p>{{ $lead->message ?: '-' }}</p>
 </body>
 </html>

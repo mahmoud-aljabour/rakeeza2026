@@ -6,15 +6,20 @@ namespace App\Models;
 
 use App\Enums\LeadStatus;
 use App\Scopes\ActiveScope;
+use Database\Factories\LeadFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'phone', 'email', 'service_id', 'message', 'status'])]
+#[Fillable(['name', 'phone', 'email', 'service_id', 'message', 'status', 'completed_price', 'completed_at'])]
 class Lead extends Model
 {
+    /** @use HasFactory<LeadFactory> */
+    use HasFactory;
+
     /**
      * @return BelongsTo<Service, $this>
      */
@@ -59,6 +64,8 @@ class Lead extends Model
     {
         return [
             'status' => LeadStatus::class,
+            'completed_price' => 'decimal:2',
+            'completed_at' => 'datetime',
         ];
     }
 }

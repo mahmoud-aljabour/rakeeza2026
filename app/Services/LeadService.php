@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\LeadNote;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +23,18 @@ final class LeadService
             ->when($status instanceof LeadStatus, fn ($query) => $query->where('status', $status))
             ->latest()
             ->get();
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Lead>
+     */
+    public function paginate(?LeadStatus $status = null, int $perPage = 10): LengthAwarePaginator
+    {
+        return Lead::query()
+            ->with(['service', 'services', 'notes'])
+            ->when($status instanceof LeadStatus, fn ($query) => $query->where('status', $status))
+            ->latest()
+            ->paginate($perPage);
     }
 
     /**
@@ -108,10 +121,21 @@ final class LeadService
         return $lead->refresh();
     }
 
-    public function updateStatus(Lead $lead, LeadStatus $status, ?string $note = null, ?int $userId = null): Lead
-    {
-        return DB::transaction(function () use ($lead, $status, $note, $userId): Lead {
-            $lead->update(['status' => $status]);
+    public function updateStatus(
+        Lead $lead,
+        LeadStatus $status,
+        ?string $note = null,
+        ?int $userId = null,
+        ?string $completedPrice = null,
+    ): Lead {
+        return DB::transaction(function () use ($lead, $status, $note, $userId, $completedPrice): Lead {
+            $isCompleted = $status === LeadStatus::Completed;
+
+            $lead->update([
+                'status' => $status,
+                'completed_price' => $isCompleted ? $completedPrice : null,
+                'completed_at' => $isCompleted ? now() : null,
+            ]);
 
             LeadNote::query()->create([
                 'lead_id' => $lead->id,
@@ -124,6 +148,41 @@ final class LeadService
         });
     }
 
+    /**
+     * @return array{
+     *     summary: array{
+     *         total: int,
+     *         pending: int,
+     *         contacted: int,
+     *         completed: int,
+     *         closed: int,
+     *         completed_count: int,
+     *         total_revenue: float
+     *     },
+     *     completed_leads: Collection<int, Lead>
+     * }
+     */
+    public function statistics(): array
+    {
+        $counts = $this->counts();
+
+        $completedLeads = Lead::query()
+            ->with(['service', 'services'])
+            ->where('status', LeadStatus::Completed)
+            ->orderByDesc('completed_at')
+            ->orderByDesc('id')
+            ->get();
+
+        return [
+            'summary' => [
+                ...$counts,
+                'completed_count' => $counts['completed'],
+                'total_revenue' => (float) $completedLeads->sum('completed_price'),
+            ],
+            'completed_leads' => $completedLeads,
+        ];
+    }
+
     public function delete(Lead $lead): bool
     {
         return (bool) $lead->delete();
@@ -134,12 +193,22 @@ final class LeadService
      */
     public function counts(): array
     {
+        $countsByStatus = Lead::query()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $pending = (int) $countsByStatus->get(LeadStatus::Pending->value, 0);
+        $contacted = (int) $countsByStatus->get(LeadStatus::Contacted->value, 0);
+        $completed = (int) $countsByStatus->get(LeadStatus::Completed->value, 0);
+        $closed = (int) $countsByStatus->get(LeadStatus::Closed->value, 0);
+
         return [
-            'total' => Lead::query()->count(),
-            'pending' => Lead::query()->where('status', LeadStatus::Pending)->count(),
-            'contacted' => Lead::query()->where('status', LeadStatus::Contacted)->count(),
-            'completed' => Lead::query()->where('status', LeadStatus::Completed)->count(),
-            'closed' => Lead::query()->where('status', LeadStatus::Closed)->count(),
+            'total' => $pending + $contacted + $completed + $closed,
+            'pending' => $pending,
+            'contacted' => $contacted,
+            'completed' => $completed,
+            'closed' => $closed,
         ];
     }
 }

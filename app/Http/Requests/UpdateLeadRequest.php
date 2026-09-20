@@ -22,6 +22,7 @@ final class UpdateLeadRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::enum(LeadStatus::class)],
+            'completed_price' => ['required_if:status,completed', 'nullable', 'numeric', 'min:0.01', 'max:9999999999.99'],
             'note' => ['nullable', 'string', 'max:2000'],
         ];
     }

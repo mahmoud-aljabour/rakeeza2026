@@ -68,9 +68,9 @@ final class CraftsmanStatusNotesTest extends TestCase
         $this->actingAs($user)
             ->getJson('/api/admin/craftsmen')
             ->assertOk()
-            ->assertJsonPath('0.id', $craftsman->id)
-            ->assertJsonPath('0.status', 'accepted')
-            ->assertJsonPath('0.notes.0.note', 'تم اعتماد الطلب.');
+            ->assertJsonPath('data.0.id', $craftsman->id)
+            ->assertJsonPath('data.0.status', 'accepted')
+            ->assertJsonPath('data.0.notes.0.note', 'تم اعتماد الطلب.');
     }
 
     public function test_note_longer_than_limit_is_rejected_without_changing_status(): void

@@ -24,8 +24,9 @@ final class LeadController extends Controller
     public function index(Request $request): JsonResponse
     {
         $status = LeadStatus::tryFrom((string) $request->query('status', ''));
+        $perPage = min(50, max(5, $request->integer('per_page', 10)));
 
-        return response()->json($this->leads->list($status));
+        return response()->json($this->leads->paginate($status, $perPage));
     }
 
     public function store(AdminStoreLeadRequest $request): JsonResponse
@@ -56,9 +57,18 @@ final class LeadController extends Controller
         $note = isset($validated['note']) && $validated['note'] !== ''
             ? $validated['note']
             : null;
+        $completedPrice = isset($validated['completed_price'])
+            ? (string) $validated['completed_price']
+            : null;
 
         return response()->json(
-            $this->leads->updateStatus($model, $status, $note, $request->user()?->id),
+            $this->leads->updateStatus(
+                $model,
+                $status,
+                $note,
+                $request->user()?->id,
+                $completedPrice,
+            ),
         );
     }
 

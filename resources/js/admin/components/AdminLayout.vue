@@ -26,11 +26,13 @@ const asideShift = computed(() => {
 
 const links = computed(() => [
     { to: '/', label: t('nav.dashboard'), icon: 'fa-gauge-high', exact: true },
-    { to: '/services', label: t('nav.services'), icon: 'fa-screwdriver-wrench' },
-    { to: '/projects', label: t('nav.projects'), icon: 'fa-images' },
     { to: '/leads', label: t('nav.leads'), icon: 'fa-inbox' },
     { to: '/craftsmen', label: t('nav.craftsmen'), icon: 'fa-user-gear' },
+    { to: '/statistics', label: t('nav.statistics'), icon: 'fa-chart-column' },
+    { to: '/services', label: t('nav.services'), icon: 'fa-screwdriver-wrench' },
+    { to: '/projects', label: t('nav.projects'), icon: 'fa-images' },
     { to: '/settings', label: t('nav.settings'), icon: 'fa-sliders' },
+    { to: '/password', label: t('nav.password'), icon: 'fa-shield-halved' },
 ]);
 
 watch(() => route.fullPath, () => {

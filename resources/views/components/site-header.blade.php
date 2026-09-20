@@ -5,7 +5,7 @@
     $isService = request()->routeIs('services.show');
     $isCraftsman = request()->routeIs('craftsman.create');
     $logoHref = $isHome ? '#home' : route('landing');
-    $nextLocale = \App\Support\AppLocale::other();
+    $currentLocale = \App\Support\AppLocale::current();
 @endphp
 
 <div class="top-bar">
@@ -35,11 +35,41 @@
         </nav>
 
         <div class="header-actions">
-            <a href="{{ route('locale.switch', $nextLocale) }}" class="lang-switch" hreflang="{{ $nextLocale }}" lang="{{ $nextLocale }}" aria-label="{{ __('site.lang.switch_to') }}">
-                <i class="fa-solid fa-language" aria-hidden="true"></i>
-                <span>{{ __('site.lang.label') }}</span>
-            </a>
+            <details class="language-menu">
+                <summary class="lang-switch" aria-label="{{ __('site.lang.menu_label') }}">
+                    <i class="fa-solid fa-language" aria-hidden="true"></i>
+                    <span class="lang-switch-label">{{ __('site.lang.current') }}</span>
+                    <i class="fa-solid fa-chevron-down language-chevron" aria-hidden="true"></i>
+                </summary>
+                <div class="language-options">
+                    <a
+                        href="{{ route('locale.switch', \App\Support\AppLocale::ARABIC) }}"
+                        lang="ar"
+                        hreflang="ar"
+                        @class(['is-active' => $currentLocale === \App\Support\AppLocale::ARABIC])
+                        @if ($currentLocale === \App\Support\AppLocale::ARABIC) aria-current="true" @endif
+                    >
+                        <span>{{ __('site.lang.arabic') }}</span>
+                        @if ($currentLocale === \App\Support\AppLocale::ARABIC)
+                            <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        @endif
+                    </a>
+                    <a
+                        href="{{ route('locale.switch', \App\Support\AppLocale::ENGLISH) }}"
+                        lang="en"
+                        hreflang="en"
+                        @class(['is-active' => $currentLocale === \App\Support\AppLocale::ENGLISH])
+                        @if ($currentLocale === \App\Support\AppLocale::ENGLISH) aria-current="true" @endif
+                    >
+                        <span>{{ __('site.lang.english') }}</span>
+                        @if ($currentLocale === \App\Support\AppLocale::ENGLISH)
+                            <i class="fa-solid fa-check" aria-hidden="true"></i>
+                        @endif
+                    </a>
+                </div>
+            </details>
             <a href="{{ route('craftsman.create') }}" @class(['nav-cta', 'is-active' => $isCraftsman])>
+                <i class="fa-solid fa-user-gear" aria-hidden="true"></i>
                 @if ($isCraftsman)
                     <span class="nav-cta-full">{{ __('site.craftsman_register') }}</span>
                     <span class="nav-cta-short">{{ __('site.craftsman_register_short') }}</span>

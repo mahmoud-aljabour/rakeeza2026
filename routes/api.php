@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\CraftsmanController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LeadController;
+use App\Http\Controllers\Admin\PasswordController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\StatisticsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -17,8 +19,10 @@ Route::get('/user', function (Request $request) {
 
 Route::middleware('auth:sanctum')->prefix('admin')->group(function (): void {
     Route::get('stats', DashboardController::class);
+    Route::get('statistics', StatisticsController::class);
     Route::get('settings', [SettingController::class, 'index']);
     Route::put('settings', [SettingController::class, 'update']);
+    Route::put('password', [PasswordController::class, 'update']);
 
     Route::apiResource('services', ServiceController::class)->names('admin.services');
     Route::post('services/{service}', [ServiceController::class, 'update']);

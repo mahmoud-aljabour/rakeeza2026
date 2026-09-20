@@ -4,6 +4,8 @@ import axios from 'axios';
 import { useApiError } from '../../composables/useApiError';
 import { useToast } from '../../composables/useToast';
 import { useLocale } from '../../composables/useLocale';
+import { itemsFrom, metaFrom } from '../../composables/usePaginatedList';
+import PaginationBar from '../../components/PaginationBar.vue';
 
 const { message } = useApiError();
 const toast = useToast();
@@ -12,9 +14,13 @@ const leads = ref([]);
 const services = ref([]);
 const filter = ref('');
 const error = ref('');
+const loading = ref(true);
+const page = ref(1);
+const meta = ref(metaFrom({}, 1));
 const selectedLead = ref(null);
 const statusDraft = ref(null);
 const statusNote = ref('');
+const statusPrice = ref('');
 const statusSaving = ref(false);
 const exporting = ref(false);
 const createOpen = ref(false);
@@ -35,14 +41,46 @@ const statuses = computed(() => [
     { value: 'completed', label: t('leads.completed') },
     { value: 'closed', label: t('leads.closed') },
 ]);
+const completionPriceInvalid = computed(() => (
+    statusDraft.value?.status === 'completed'
+    && (!statusPrice.value || Number(statusPrice.value) <= 0)
+));
 
 function statusLabel(value) {
     return statuses.value.find((item) => item.value === value)?.label || value;
 }
 
+function servicesList(lead) {
+    const titles = Array.isArray(lead.services)
+        ? lead.services.map((service) => service.title).filter(Boolean)
+        : [];
+
+    if (titles.length) {
+        return titles;
+    }
+
+    return lead.service?.title ? [lead.service.title] : [];
+}
+
+function servicesLabel(lead) {
+    const titles = servicesList(lead);
+
+    return titles.length
+        ? titles.join(locale.value === 'en' ? ', ' : '، ')
+        : t('leads.general');
+}
+
+function formatMoney(value) {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+    }).format(Number(value || 0));
+}
+
 function formatNoteAt(value) {
     if (!value) {
-        return '—';
+        return '-';
     }
 
     return new Intl.DateTimeFormat(locale.value === 'en' ? 'en-GB' : 'ar-EG', {
@@ -62,9 +100,40 @@ async function loadServices() {
     }
 }
 
-async function load() {
-    const { data } = await axios.get('/api/admin/leads', { params: filter.value ? { status: filter.value } : {} });
-    leads.value = data;
+async function load(nextPage = page.value) {
+    loading.value = true;
+    error.value = '';
+
+    try {
+        const { data } = await axios.get('/api/admin/leads', {
+            params: {
+                page: nextPage,
+                per_page: 10,
+                ...(filter.value ? { status: filter.value } : {}),
+            },
+        });
+        const rows = itemsFrom(data);
+        const nextMeta = metaFrom(data, nextPage);
+
+        if (nextMeta.last_page && nextPage > nextMeta.last_page) {
+            await load(nextMeta.last_page);
+            return;
+        }
+
+        leads.value = rows;
+        meta.value = nextMeta;
+        page.value = nextMeta.current_page;
+    } catch (e) {
+        leads.value = [];
+        error.value = message(e);
+        toast.error(error.value);
+    } finally {
+        loading.value = false;
+    }
+}
+
+function onFilterChange() {
+    load(1);
 }
 
 function beginStatusChange(lead, status) {
@@ -74,11 +143,13 @@ function beginStatusChange(lead, status) {
 
     statusDraft.value = { lead, status };
     statusNote.value = '';
+    statusPrice.value = '';
 }
 
 function cancelStatusChange() {
     statusDraft.value = null;
     statusNote.value = '';
+    statusPrice.value = '';
 }
 
 async function confirmStatusChange() {
@@ -93,6 +164,7 @@ async function confirmStatusChange() {
     try {
         const { data } = await axios.patch(`/api/admin/leads/${lead.id}`, {
             status,
+            completed_price: status === 'completed' ? statusPrice.value : null,
             note: statusNote.value.trim() || null,
         });
         Object.assign(lead, data);
@@ -100,7 +172,11 @@ async function confirmStatusChange() {
             selectedLead.value = { ...data };
         }
         cancelStatusChange();
-        toast.fromResponse(data, t('leads.updated'));
+        toast.success(t('leads.updated'));
+
+        if (filter.value && filter.value !== status) {
+            await load(page.value);
+        }
     } catch (e) {
         error.value = message(e);
         toast.error(error.value);
@@ -138,7 +214,7 @@ async function submitCreate() {
         });
         closeCreate();
         toast.success(t('leads.created'));
-        await load();
+        await load(1);
         if (data?.id) {
             openMessage(data);
         }
@@ -200,7 +276,8 @@ async function remove(lead) {
             closeMessage();
         }
         toast.fromResponse(data, t('leads.deleted'));
-        await load();
+        const nextPage = leads.value.length === 1 && page.value > 1 ? page.value - 1 : page.value;
+        await load(nextPage);
     } catch (e) {
         error.value = message(e);
         toast.error(error.value);
@@ -238,7 +315,7 @@ watch([selectedLead, statusDraft, createOpen], ([lead, draft, create]) => {
 });
 
 onMounted(async () => {
-    await Promise.all([load(), loadServices()]);
+    await Promise.all([load(1), loadServices()]);
     window.addEventListener('keydown', onKeydown);
 });
 
@@ -271,7 +348,7 @@ onUnmounted(() => {
                 >
                     {{ exporting ? t('leads.exporting') : t('leads.export') }}
                 </button>
-                <select v-model="filter" class="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold" @change="load">
+                <select v-model="filter" class="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold" @change="onFilterChange">
                     <option v-for="item in statuses" :key="item.value" :value="item.value">{{ item.label }}</option>
                 </select>
             </div>
@@ -296,10 +373,25 @@ onUnmounted(() => {
                     <tr v-for="lead in leads" :key="lead.id" class="border-t border-slate-100">
                         <td class="whitespace-nowrap px-4 py-3 font-bold">{{ lead.name }}</td>
                         <td class="whitespace-nowrap px-4 py-3" dir="ltr">{{ lead.phone }}</td>
-                        <td class="whitespace-nowrap px-4 py-3" dir="ltr">{{ lead.email || '—' }}</td>
-                        <td class="whitespace-nowrap px-4 py-3">{{ lead.service?.title || t('leads.general') }}</td>
+                        <td class="max-w-[10rem] px-4 py-3 lg:max-w-[12rem] xl:max-w-[15rem]" dir="ltr">
+                            <p class="truncate" :title="lead.email || undefined">{{ lead.email || '-' }}</p>
+                        </td>
                         <td class="px-4 py-3">
-                            <p class="line-clamp-2 max-w-[14rem] text-slate-500">{{ lead.message || '—' }}</p>
+                            <div class="flex max-w-xs items-center gap-1.5">
+                                <span class="inline-flex max-w-[11rem] truncate rounded-full bg-primary/8 px-2.5 py-1 text-xs font-extrabold text-primary">
+                                    {{ servicesList(lead)[0] || t('leads.general') }}
+                                </span>
+                                <span
+                                    v-if="servicesList(lead).length > 1"
+                                    class="inline-flex min-w-7 items-center justify-center rounded-full bg-accent/15 px-2 py-1 text-xs font-black text-accent"
+                                    :title="servicesList(lead).slice(1).join(locale === 'en' ? ', ' : '، ')"
+                                >
+                                    +{{ servicesList(lead).length - 1 }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <p class="line-clamp-2 max-w-[14rem] text-slate-500">{{ lead.message || '-' }}</p>
                         </td>
                         <td class="px-4 py-3">
                             <select
@@ -338,6 +430,15 @@ onUnmounted(() => {
             </table>
         </div>
         <p class="text-xs font-bold text-slate-400 lg:hidden">{{ t('leads.scroll_hint') }}</p>
+
+        <PaginationBar
+            :page="page"
+            :last-page="meta.last_page"
+            :total="meta.total"
+            :from="meta.from"
+            :to="meta.to"
+            @change="load"
+        />
 
         <div
             v-if="createOpen"
@@ -448,6 +549,24 @@ onUnmounted(() => {
                     </button>
                 </div>
 
+                <div v-if="statusDraft.status === 'completed'" class="mb-4">
+                    <label class="mb-2 block text-sm font-extrabold text-primary" for="lead-completed-price">
+                        {{ t('leads.completed_price') }}
+                    </label>
+                    <input
+                        id="lead-completed-price"
+                        v-model="statusPrice"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        required
+                        inputmode="decimal"
+                        class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-primary"
+                        :placeholder="t('leads.completed_price_placeholder')"
+                    >
+                    <p class="mt-2 text-xs font-bold text-slate-400">{{ t('leads.completed_price_hint') }}</p>
+                </div>
+
                 <label class="mb-2 block text-sm font-extrabold text-primary" for="lead-status-note">{{ t('leads.note_label') }}</label>
                 <textarea
                     id="lead-status-note"
@@ -462,7 +581,7 @@ onUnmounted(() => {
                     <button
                         type="button"
                         class="rounded-xl bg-accent px-5 py-2.5 text-sm font-extrabold text-white hover:bg-accent-hover disabled:opacity-60"
-                        :disabled="statusSaving"
+                        :disabled="statusSaving || completionPriceInvalid"
                         @click="confirmStatusChange"
                     >
                         {{ statusSaving ? t('leads.saving') : t('leads.confirm_status') }}
@@ -511,15 +630,29 @@ onUnmounted(() => {
                     </div>
                     <div>
                         <dt class="font-extrabold text-primary">{{ t('email') }}</dt>
-                        <dd class="text-slate-600" dir="ltr">{{ selectedLead.email || '—' }}</dd>
+                        <dd class="text-slate-600" dir="ltr">{{ selectedLead.email || '-' }}</dd>
                     </div>
                     <div>
                         <dt class="font-extrabold text-primary">{{ t('service') }}</dt>
-                        <dd class="text-slate-600">{{ selectedLead.service?.title || t('leads.general') }}</dd>
+                        <dd class="mt-2 flex flex-wrap gap-2">
+                            <span
+                                v-for="service in servicesList(selectedLead)"
+                                :key="service"
+                                class="inline-flex items-center gap-1.5 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-xs font-extrabold text-primary"
+                            >
+                                <i class="fa-solid fa-screwdriver-wrench text-[10px] text-accent" aria-hidden="true"></i>
+                                {{ service }}
+                            </span>
+                            <span v-if="!servicesList(selectedLead).length" class="text-slate-500">{{ t('leads.general') }}</span>
+                        </dd>
                     </div>
                     <div>
                         <dt class="font-extrabold text-primary">{{ t('status') }}</dt>
                         <dd class="text-slate-600">{{ statusLabel(selectedLead.status) }}</dd>
+                    </div>
+                    <div v-if="selectedLead.completed_price">
+                        <dt class="font-extrabold text-primary">{{ t('leads.completed_price') }}</dt>
+                        <dd class="font-extrabold text-emerald-700" dir="ltr">{{ formatMoney(selectedLead.completed_price) }}</dd>
                     </div>
                     <div>
                         <dt class="font-extrabold text-primary">{{ t('message') }}</dt>
