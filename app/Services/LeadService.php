@@ -8,6 +8,7 @@ use App\Enums\LeadStatus;
 use App\Models\Lead;
 use App\Models\LeadNote;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -16,11 +17,9 @@ final class LeadService
     /**
      * @return Collection<int, Lead>
      */
-    public function list(?LeadStatus $status = null): Collection
+    public function list(?LeadStatus $status = null, ?string $from = null, ?string $to = null): Collection
     {
-        return Lead::query()
-            ->with(['service', 'services', 'notes'])
-            ->when($status instanceof LeadStatus, fn ($query) => $query->where('status', $status))
+        return $this->filteredQuery($status, $from, $to)
             ->latest()
             ->get();
     }
@@ -28,13 +27,33 @@ final class LeadService
     /**
      * @return LengthAwarePaginator<int, Lead>
      */
-    public function paginate(?LeadStatus $status = null, int $perPage = 10): LengthAwarePaginator
+    public function paginate(
+        ?LeadStatus $status = null,
+        int $perPage = 10,
+        ?string $from = null,
+        ?string $to = null,
+    ): LengthAwarePaginator {
+        return $this->filteredQuery($status, $from, $to)
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * @return Builder<Lead>
+     */
+    private function filteredQuery(?LeadStatus $status = null, ?string $from = null, ?string $to = null): Builder
     {
         return Lead::query()
             ->with(['service', 'services', 'notes'])
             ->when($status instanceof LeadStatus, fn ($query) => $query->where('status', $status))
-            ->latest()
-            ->paginate($perPage);
+            ->when(
+                filled($from),
+                fn ($query) => $query->where('created_at', '>=', $from.' 00:00:00'),
+            )
+            ->when(
+                filled($to),
+                fn ($query) => $query->where('created_at', '<=', $to.' 23:59:59'),
+            );
     }
 
     /**

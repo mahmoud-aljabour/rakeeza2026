@@ -22,6 +22,7 @@
                 <li><a href="{{ $isHome ? '#services' : url('/#services') }}">{{ __('site.nav.services') }}</a></li>
                 <li><a href="{{ $isHome ? '#projects' : url('/#projects') }}">{{ __('site.nav.projects') }}</a></li>
                 <li><a href="{{ route('craftsman.create') }}">{{ __('site.footer.join') }}</a></li>
+                <li><a href="{{ route('privacy') }}">{{ __('site.footer.privacy') }}</a></li>
                 <li><a href="{{ $isHome ? '#contact' : url('/#contact') }}">{{ __('site.nav.contact') }}</a></li>
             </ul>
         </div>
@@ -29,7 +30,7 @@
         <div>
             <h4 class="footer-title">{{ __('site.footer.services') }}</h4>
             <ul class="footer-links">
-                @foreach ($services->take(4) as $item)
+                @foreach ($services as $item)
                     <li><a href="{{ route('services.show', $item) }}">{{ $item->displayTitle() }}</a></li>
                 @endforeach
             </ul>
@@ -46,6 +47,9 @@
     </div>
 
     <div class="copyright">
-        {{ __('site.footer.copyright', ['year' => now()->year, 'company' => __('site.brand_company')]) }}
+        <p>{{ __('site.footer.copyright', ['year' => now()->year, 'company' => __('site.brand_company')]) }}</p>
+        <p class="copyright-legal">
+            <a href="{{ route('privacy') }}">{{ __('site.footer.privacy') }}</a>
+        </p>
     </div>
 </footer>

@@ -34,8 +34,11 @@ return [
     ],
 
     'meta' => [
-        'landing_title' => ':app | Integrated restoration and facility solutions',
+        'landing_title' => 'Rakeeza | Home and facility services in Gaza',
+        'landing_description' => 'Rakeeza delivers home and facility services in Gaza: cleaning, debris removal, maintenance, health and safety, and interior design. Send your request today.',
         'craftsman_title' => 'Craftsman registration | :app',
+        'privacy_title' => 'Privacy policy | Rakeeza',
+        'privacy_description' => 'Rakeeza privacy policy explains the data we collect for requests and registration, how we use and protect it, and your right to review, correct, or delete it.',
     ],
 
     'hero' => [
@@ -72,6 +75,9 @@ return [
         'request_quote' => 'Request price via WhatsApp',
         'whatsapp_quote_message' => 'Hello Rakeeza, I would like a quote for: :service',
         'send_request' => 'Send your request here',
+        'page_heading' => ':service in the Gaza Strip',
+        'default_seo_title' => ':service in Gaza | :brand',
+        'image_alt' => ':service in Gaza - :brand',
         'works_kicker' => 'Project gallery',
         'works_title' => 'Completed projects',
         'empty_projects' => 'No projects are listed for this service yet.',
@@ -208,11 +214,21 @@ return [
         'password_updated' => 'Your password was updated successfully.',
     ],
 
+    'privacy' => [
+        'title' => 'Privacy policy',
+        'kicker' => 'Your privacy',
+        'empty' => 'Privacy policy sections will be published here soon.',
+        'crumb' => 'Breadcrumb',
+        'contents' => 'On this page',
+        'sections_count' => '{1} 1 section|[2,*] :count sections',
+    ],
+
     'footer' => [
         'quick_links' => 'Quick links',
         'services' => 'Our services',
         'contact' => 'Contact',
         'join' => 'Join as craftsman',
+        'privacy' => 'Privacy policy',
         'copyright' => '© :year :company. All rights reserved.',
     ],
 
@@ -225,6 +241,11 @@ return [
     ],
 
     'photos' => '{1} :count photo|[2,*] :count photos',
+
+    'schema' => [
+        'business_description' => 'Home and facility services',
+        'area' => 'Gaza Strip',
+    ],
 
     'why_photo_alt' => 'Engineering planning and professional execution',
 ];

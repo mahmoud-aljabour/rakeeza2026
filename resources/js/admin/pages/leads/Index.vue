@@ -13,6 +13,10 @@ const { t, locale } = useLocale();
 const leads = ref([]);
 const services = ref([]);
 const filter = ref('');
+const dateFrom = ref('');
+const dateTo = ref('');
+const appliedFrom = ref('');
+const appliedTo = ref('');
 const error = ref('');
 const loading = ref(true);
 const page = ref(1);
@@ -45,6 +49,33 @@ const completionPriceInvalid = computed(() => (
     statusDraft.value?.status === 'completed'
     && (!statusPrice.value || Number(statusPrice.value) <= 0)
 ));
+const hasDateFilter = computed(() => Boolean(appliedFrom.value || appliedTo.value));
+const dateRangeInvalid = computed(() => (
+    Boolean(dateFrom.value && dateTo.value && dateTo.value < dateFrom.value)
+));
+const periodSummary = computed(() => {
+    if (!hasDateFilter.value) {
+        return '';
+    }
+
+    if (appliedFrom.value && appliedTo.value) {
+        return t('leads.period_range', { from: appliedFrom.value, to: appliedTo.value });
+    }
+
+    if (appliedFrom.value) {
+        return t('leads.period_from_only', { from: appliedFrom.value });
+    }
+
+    return t('leads.period_to_only', { to: appliedTo.value });
+});
+
+function listQueryParams() {
+    return {
+        ...(filter.value ? { status: filter.value } : {}),
+        ...(appliedFrom.value ? { from: appliedFrom.value } : {}),
+        ...(appliedTo.value ? { to: appliedTo.value } : {}),
+    };
+}
 
 function statusLabel(value) {
     return statuses.value.find((item) => item.value === value)?.label || value;
@@ -109,7 +140,7 @@ async function load(nextPage = page.value) {
             params: {
                 page: nextPage,
                 per_page: 10,
-                ...(filter.value ? { status: filter.value } : {}),
+                ...listQueryParams(),
             },
         });
         const rows = itemsFrom(data);
@@ -133,6 +164,25 @@ async function load(nextPage = page.value) {
 }
 
 function onFilterChange() {
+    load(1);
+}
+
+function applyDateFilter() {
+    if (dateRangeInvalid.value) {
+        toast.error(t('leads.date_range_invalid'));
+        return;
+    }
+
+    appliedFrom.value = dateFrom.value;
+    appliedTo.value = dateTo.value;
+    load(1);
+}
+
+function clearDateFilter() {
+    dateFrom.value = '';
+    dateTo.value = '';
+    appliedFrom.value = '';
+    appliedTo.value = '';
     load(1);
 }
 
@@ -256,7 +306,7 @@ async function exportList() {
         await downloadExport(
             '/api/admin/leads/export',
             t('leads.file_list'),
-            filter.value ? { status: filter.value } : {},
+            listQueryParams(),
         );
         toast.success(t('leads.exported_list'));
     } catch (e) {
@@ -348,10 +398,79 @@ onUnmounted(() => {
                 >
                     {{ exporting ? t('leads.exporting') : t('leads.export') }}
                 </button>
-                <select v-model="filter" class="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold" @change="onFilterChange">
-                    <option v-for="item in statuses" :key="item.value" :value="item.value">{{ item.label }}</option>
-                </select>
             </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <p class="text-sm font-semibold text-primary">{{ t('leads.inventory_title') }}</p>
+                    <p class="text-xs font-medium text-slate-500">{{ t('leads.inventory_hint') }}</p>
+                </div>
+                <p
+                    v-if="hasDateFilter"
+                    class="inline-flex items-center gap-2 rounded-full bg-primary/8 px-3 py-1 text-xs font-semibold text-primary"
+                >
+                    <i class="fa-solid fa-calendar-days text-[11px] text-accent" aria-hidden="true"></i>
+                    {{ periodSummary }}
+                    <span class="text-slate-400">·</span>
+                    {{ t('leads.inventory_count', { count: meta.total }) }}
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-end gap-3">
+                <label class="min-w-[10.5rem] flex-1 sm:flex-none">
+                    <span class="mb-1.5 block text-xs font-semibold text-slate-500">{{ t('leads.date_from') }}</span>
+                    <input
+                        v-model="dateFrom"
+                        type="date"
+                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-primary outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
+                        :max="dateTo || undefined"
+                    >
+                </label>
+
+                <label class="min-w-[10.5rem] flex-1 sm:flex-none">
+                    <span class="mb-1.5 block text-xs font-semibold text-slate-500">{{ t('leads.date_to') }}</span>
+                    <input
+                        v-model="dateTo"
+                        type="date"
+                        class="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-primary outline-none transition focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/15"
+                        :min="dateFrom || undefined"
+                    >
+                </label>
+
+                <label class="min-w-[11rem] flex-1 sm:flex-none">
+                    <span class="mb-1.5 block text-xs font-semibold text-slate-500">{{ t('status') }}</span>
+                    <select
+                        v-model="filter"
+                        class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-primary outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15"
+                        @change="onFilterChange"
+                    >
+                        <option v-for="item in statuses" :key="item.value" :value="item.value">{{ item.label }}</option>
+                    </select>
+                </label>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        class="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary-light disabled:opacity-60"
+                        :disabled="dateRangeInvalid || loading"
+                        @click="applyDateFilter"
+                    >
+                        {{ t('leads.apply_inventory') }}
+                    </button>
+                    <button
+                        type="button"
+                        class="h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+                        :disabled="!dateFrom && !dateTo && !hasDateFilter"
+                        @click="clearDateFilter"
+                    >
+                        {{ t('leads.clear_inventory') }}
+                    </button>
+                </div>
+            </div>
+
+            <p v-if="dateRangeInvalid" class="mt-3 text-xs font-semibold text-red-600">{{ t('leads.date_range_invalid') }}</p>
         </div>
 
         <p v-if="error" class="rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</p>

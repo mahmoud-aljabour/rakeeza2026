@@ -8,14 +8,23 @@ use App\Models\Service;
 use App\Services\ServiceService;
 use App\Services\SettingService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
 final class ServiceController extends Controller
 {
     public function __invoke(
-        Service $service,
+        string $service,
         ServiceService $serviceService,
         SettingService $settingService,
-    ): View {
+    ): View|RedirectResponse {
+        if (ctype_digit($service)) {
+            $model = Service::query()->findOrFail((int) $service);
+
+            return redirect()->route('services.show', $model, 301);
+        }
+
+        $service = Service::query()->where('slug', $service)->firstOrFail();
+
         $service->load([
             'projects' => static fn ($query) => $query->ordered(),
         ]);

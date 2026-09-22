@@ -56,6 +56,7 @@ final class CraftsmanExcelExportTest extends TestCase
         $user = User::factory()->create();
         Craftsman::query()->create([
             'name' => 'أحمد النجار',
+            'national_id' => '401234567',
             'phone' => '0597000000',
             'city' => 'غزة',
             'specialty' => ['نجارة'],
@@ -78,6 +79,8 @@ final class CraftsmanExcelExportTest extends TestCase
         $this->assertSheetDirection($path, rightToLeft: true);
         $this->assertXlsxContains($path, 'طلبات تسجيل الحرفيين');
         $this->assertXlsxContains($path, 'الاسم');
+        $this->assertXlsxContains($path, 'رقم الهوية');
+        $this->assertXlsxContains($path, '401234567');
         $this->assertXlsxDoesNotContain($path, '—');
         unlink($path);
     }
@@ -87,6 +90,7 @@ final class CraftsmanExcelExportTest extends TestCase
         $user = User::factory()->create();
         Craftsman::query()->create([
             'name' => 'Omar',
+            'national_id' => '409876543',
             'phone' => '0597111111',
             'city' => 'Ramallah',
             'specialty' => ['Plumbing'],
@@ -104,6 +108,8 @@ final class CraftsmanExcelExportTest extends TestCase
         $path = $this->storeExportedXlsx($this->exportedBinary($response));
         $this->assertSheetDirection($path, rightToLeft: false);
         $this->assertXlsxContains($path, 'Craftsman registration requests');
+        $this->assertXlsxContains($path, 'National ID');
+        $this->assertXlsxContains($path, '409876543');
         $this->assertXlsxContains($path, 'Specialty');
         $this->assertXlsxContains($path, 'New');
         unlink($path);

@@ -11,6 +11,8 @@ import ProjectsIndex from '../pages/projects/Index.vue';
 import ProjectForm from '../pages/projects/Form.vue';
 import LeadsIndex from '../pages/leads/Index.vue';
 import CraftsmenIndex from '../pages/craftsmen/Index.vue';
+import PrivacyIndex from '../pages/privacy/Index.vue';
+import PrivacyForm from '../pages/privacy/Form.vue';
 import SettingsIndex from '../pages/settings/Index.vue';
 import PasswordIndex from '../pages/password/Index.vue';
 
@@ -38,6 +40,9 @@ const router = createRouter({
                 { path: 'projects/:id/edit', name: 'projects.edit', component: ProjectForm },
                 { path: 'leads', name: 'leads', component: LeadsIndex },
                 { path: 'craftsmen', name: 'craftsmen', component: CraftsmenIndex },
+                { path: 'privacy-policy', name: 'privacy', component: PrivacyIndex },
+                { path: 'privacy-policy/create', name: 'privacy.create', component: PrivacyForm },
+                { path: 'privacy-policy/:id/edit', name: 'privacy.edit', component: PrivacyForm },
                 { path: 'settings', name: 'settings', component: SettingsIndex },
                 { path: 'password', name: 'password', component: PasswordIndex },
             ],

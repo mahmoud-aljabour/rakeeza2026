@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\Service;
+use App\Models\PrivacyPolicySection;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Service>
+ * @extends Factory<PrivacyPolicySection>
  */
-class ServiceFactory extends Factory
+class PrivacyPolicySectionFactory extends Factory
 {
     /**
      * @return array<string, mixed>
@@ -18,10 +18,11 @@ class ServiceFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => fake()->unique()->words(3, true),
-            'slug' => fake()->unique()->slug(2),
+            'title' => fake()->unique()->sentence(3),
+            'title_en' => fake()->unique()->sentence(3),
             'description' => fake()->paragraph(),
-            'image_path' => 'https://example.com/service.jpg',
+            'description_en' => fake()->paragraph(),
+            'order_column' => fake()->numberBetween(1, 20),
             'is_active' => true,
         ];
     }

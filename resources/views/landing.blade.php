@@ -1,8 +1,15 @@
 @extends('layouts.site')
 
-@section('title', __('site.meta.landing_title', ['app' => config('app.name')]))
+@section('title', __('site.meta.landing_title'))
 
 @push('head')
+    @include('partials.seo-meta', [
+        'title' => __('site.meta.landing_title'),
+        'description' => __('site.meta.landing_description'),
+        'image' => asset('images/logo.png'),
+        'url' => route('landing'),
+    ])
+    @include('partials.json-ld', ['schema' => \App\Support\StructuredData::localBusiness($site)])
     <link rel="preload" as="image" href="{{ asset('images/hero-bg-3.jpg') }}">
 @endpush
 
@@ -118,7 +125,7 @@
                 @foreach ($services as $service)
                     <article class="service-card">
                         <a href="{{ route('services.show', $service) }}" class="service-image">
-                            <img src="{{ $service->imageUrl() }}" alt="{{ $service->displayTitle() }}" loading="lazy" decoding="async">
+                            <img src="{{ $service->imageUrl() }}" alt="{{ $service->imageAlt() }}" loading="lazy" decoding="async">
                         </a>
                         <div class="service-body">
                             <div>

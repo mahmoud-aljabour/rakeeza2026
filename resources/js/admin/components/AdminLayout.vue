@@ -31,6 +31,7 @@ const links = computed(() => [
     { to: '/statistics', label: t('nav.statistics'), icon: 'fa-chart-column' },
     { to: '/services', label: t('nav.services'), icon: 'fa-screwdriver-wrench' },
     { to: '/projects', label: t('nav.projects'), icon: 'fa-images' },
+    { to: '/privacy-policy', label: t('nav.privacy'), icon: 'fa-user-shield' },
     { to: '/settings', label: t('nav.settings'), icon: 'fa-sliders' },
     { to: '/password', label: t('nav.password'), icon: 'fa-shield-halved' },
 ]);
@@ -103,8 +104,8 @@ async function onLogout() {
                         class="h-10 w-auto max-h-10 shrink-0 object-contain"
                     >
                     <div class="min-w-0 leading-tight">
-                        <p class="text-[11px] font-bold tracking-[0.16em] text-accent uppercase">{{ t('brand') }}</p>
-                        <p class="truncate text-base font-extrabold">{{ t('panel') }}</p>
+                        <p class="text-[11px] font-semibold tracking-[0.16em] text-accent uppercase">{{ t('brand') }}</p>
+                        <p class="truncate text-base font-semibold">{{ t('panel') }}</p>
                     </div>
                 </a>
                 <button
@@ -127,8 +128,8 @@ async function onLogout() {
                 >
                     <a
                         :href="href"
-                        class="flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition"
-                        :class="(link.exact ? isExactActive : isActive) ? 'bg-accent text-white' : 'text-slate-200 hover:bg-white/10'"
+                        class="flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition"
+                        :class="(link.exact ? isExactActive : isActive) ? 'bg-accent font-semibold text-white' : 'text-slate-200 hover:bg-white/10'"
                         @click="navigate"
                     >
                         <i class="fa-solid w-4" :class="link.icon"></i>
@@ -137,11 +138,11 @@ async function onLogout() {
                 </RouterLink>
             </nav>
 
-            <div class="shrink-0 border-t border-white/10 p-4">
-                <p class="mb-3 text-xs text-slate-300">{{ state.user?.name }}</p>
+            <div class="shrink-0 border-t border-white/15 bg-white/10 p-4">
+                <p class="mb-3 truncate text-sm font-medium text-white/90">{{ state.user?.name }}</p>
                 <div class="flex gap-2">
-                    <a href="/" class="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/15 px-3 py-2 text-center text-xs font-bold hover:bg-white/8">{{ t('site') }}</a>
-                    <button type="button" class="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-accent px-3 py-2 text-xs font-bold hover:bg-accent-hover" @click="onLogout">{{ t('logout') }}</button>
+                    <a href="/" class="flex min-h-11 flex-1 items-center justify-center rounded-xl border border-white/30 bg-white/15 px-3 py-2 text-center text-xs font-semibold text-white transition hover:bg-white/25">{{ t('site') }}</a>
+                    <button type="button" class="flex min-h-11 flex-1 items-center justify-center rounded-xl bg-accent px-3 py-2 text-xs font-semibold text-white transition hover:bg-accent-hover" @click="onLogout">{{ t('logout') }}</button>
                 </div>
             </div>
         </aside>
@@ -158,8 +159,8 @@ async function onLogout() {
                     <i class="fa-solid fa-bars"></i>
                 </button>
                 <div class="min-w-0">
-                    <h1 class="text-lg font-extrabold text-primary">{{ t('header_title') }}</h1>
-                    <p class="text-sm text-slate-500">{{ t('header_subtitle') }}</p>
+                    <h1 class="text-lg font-semibold text-primary">{{ t('header_title') }}</h1>
+                    <p class="text-sm font-normal text-slate-500">{{ t('header_subtitle') }}</p>
                 </div>
                 <LangSwitch class="ms-auto shrink-0" />
             </header>

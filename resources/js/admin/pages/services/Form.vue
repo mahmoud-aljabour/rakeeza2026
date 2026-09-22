@@ -23,8 +23,15 @@ const imageSource = ref('upload');
 const form = reactive({
     title: '',
     title_en: '',
+    slug: '',
     description: '',
     description_en: '',
+    body: '',
+    body_en: '',
+    seo_title: '',
+    seo_title_en: '',
+    meta_description: '',
+    meta_description_en: '',
     projects_count: 0,
     is_active: true,
     image: null,
@@ -39,8 +46,15 @@ onMounted(async () => {
     const { data } = await axios.get(`/api/admin/services/${route.params.id}`);
     form.title = data.title;
     form.title_en = data.title_en || '';
+    form.slug = data.slug || '';
     form.description = data.description || '';
     form.description_en = data.description_en || '';
+    form.body = data.body || '';
+    form.body_en = data.body_en || '';
+    form.seo_title = data.seo_title || '';
+    form.seo_title_en = data.seo_title_en || '';
+    form.meta_description = data.meta_description || '';
+    form.meta_description_en = data.meta_description_en || '';
     form.projects_count = data.projects_count ?? 0;
     form.is_active = data.is_active;
     preview.value = data.image_url;
@@ -94,8 +108,15 @@ async function submit() {
     const payload = new FormData();
     payload.append('title', form.title);
     payload.append('title_en', form.title_en);
+    payload.append('slug', form.slug);
     payload.append('description', form.description);
     payload.append('description_en', form.description_en);
+    payload.append('body', form.body);
+    payload.append('body_en', form.body_en);
+    payload.append('seo_title', form.seo_title);
+    payload.append('seo_title_en', form.seo_title_en);
+    payload.append('meta_description', form.meta_description);
+    payload.append('meta_description_en', form.meta_description_en);
     payload.append('projects_count', String(form.projects_count ?? 0));
     payload.append('is_active', form.is_active ? '1' : '0');
 
@@ -126,7 +147,7 @@ async function submit() {
 </script>
 
 <template>
-    <section class="mx-auto max-w-2xl space-y-5">
+    <section class="mx-auto max-w-3xl space-y-5">
         <h2 class="text-2xl font-black text-primary">{{ isEdit ? t('services.edit') : t('services.create') }}</h2>
         <form class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" @submit.prevent="submit">
             <p v-if="error" class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</p>
@@ -137,16 +158,44 @@ async function submit() {
                     <input v-model="form.title" required dir="rtl" class="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary">
 
                     <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('description') }}</label>
-                    <textarea v-model="form.description" rows="5" dir="rtl" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <textarea v-model="form.description" rows="4" dir="rtl" class="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.field_body') }}</label>
+                    <textarea v-model="form.body" rows="12" dir="rtl" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <p class="mb-4 mt-2 text-xs font-bold text-slate-500">{{ t('services.field_body_help') }}</p>
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.seo_title') }}</label>
+                    <input v-model="form.seo_title" maxlength="120" dir="rtl" class="mb-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary">
+                    <p class="mb-4 text-xs font-bold text-slate-500">{{ t('services.seo_title_help') }}</p>
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.meta_description') }}</label>
+                    <textarea v-model="form.meta_description" rows="3" maxlength="160" dir="rtl" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <p class="mt-2 text-xs font-bold text-slate-500">{{ t('services.meta_description_help') }}</p>
                 </template>
                 <template #en>
                     <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('common.en_title') }}</label>
                     <input v-model="form.title_en" class="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary">
 
                     <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('common.en_description') }}</label>
-                    <textarea v-model="form.description_en" rows="5" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <textarea v-model="form.description_en" rows="4" class="mb-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.field_body') }}</label>
+                    <textarea v-model="form.body_en" rows="12" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <p class="mb-4 mt-2 text-xs font-bold text-slate-500">{{ t('services.field_body_help') }}</p>
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.seo_title') }}</label>
+                    <input v-model="form.seo_title_en" maxlength="120" class="mb-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary">
+                    <p class="mb-4 text-xs font-bold text-slate-500">{{ t('services.seo_title_help') }}</p>
+
+                    <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.meta_description') }}</label>
+                    <textarea v-model="form.meta_description_en" rows="3" maxlength="160" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary"></textarea>
+                    <p class="mt-2 text-xs font-bold text-slate-500">{{ t('services.meta_description_help') }}</p>
                 </template>
             </ContentLocaleTabs>
+
+            <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.slug') }}</label>
+            <input v-model="form.slug" dir="ltr" maxlength="80" class="mb-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-primary" placeholder="debris-removal">
+            <p class="mb-4 text-xs font-bold text-slate-500">{{ t('services.slug_help') }}</p>
 
             <label class="mb-2 block text-sm font-extrabold text-primary">{{ t('services.projects_count') }}</label>
             <input

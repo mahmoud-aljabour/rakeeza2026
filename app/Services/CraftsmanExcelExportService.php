@@ -37,7 +37,7 @@ final class CraftsmanExcelExportService
                 $columnCount,
                 $headerRow,
                 max($headerRow, $lastDataRow),
-                [6, 22, 16, 16, 28, 12, 10, 36, 14, 18],
+                [6, 22, 14, 16, 16, 28, 12, 10, 36, 14, 18],
             );
 
             $writer->addRow(Row::fromValuesWithStyle([
@@ -74,6 +74,7 @@ final class CraftsmanExcelExportService
             return [
                 '#',
                 'Name',
+                'National ID',
                 'Phone',
                 'Area',
                 'Specialty',
@@ -88,6 +89,7 @@ final class CraftsmanExcelExportService
         return [
             '#',
             'الاسم',
+            'رقم الهوية',
             'الجوال',
             'المنطقة',
             'التخصص',
@@ -115,6 +117,7 @@ final class CraftsmanExcelExportService
         return [
             $index,
             $craftsman->name,
+            $craftsman->national_id,
             $craftsman->phone,
             $craftsman->city,
             $craftsman->specialtiesLabel($separator),

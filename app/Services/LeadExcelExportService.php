@@ -18,14 +18,18 @@ final class LeadExcelExportService
     /**
      * @param  Collection<int, Lead>  $leads
      */
-    public function downloadList(Collection $leads, ?LeadStatus $status = null): BinaryFileResponse
-    {
+    public function downloadList(
+        Collection $leads,
+        ?LeadStatus $status = null,
+        ?string $from = null,
+        ?string $to = null,
+    ): BinaryFileResponse {
         $locale = AppLocale::current();
         $filename = ($locale === AppLocale::ENGLISH
             ? 'customer-leads-'
             : 'طلبات-العملاء-').now()->format('Y-m-d').'.xlsx';
 
-        $path = $this->writeWorkbook(function (Writer $writer) use ($leads, $status, $locale): void {
+        $path = $this->writeWorkbook(function (Writer $writer) use ($leads, $status, $from, $to, $locale): void {
             $headings = $this->headings($locale);
             $columnCount = count($headings);
             $headerRow = 4;
@@ -46,6 +50,7 @@ final class LeadExcelExportService
 
             $writer->addRow(Row::fromValuesWithStyle([
                 $this->copy('status', $locale).': '.($status?->label($locale) ?? $this->copy('all', $locale)),
+                $this->periodLabel($locale, $from, $to),
                 $this->copy('exported_at', $locale).': '.now()->format('Y-m-d H:i'),
                 $this->copy('count', $locale).': '.$leads->count(),
             ], ExcelExportStyle::metaStyle(), 20));
@@ -139,6 +144,10 @@ final class LeadExcelExportService
             'title' => 'Customer leads Rakeeza',
             'status' => 'Status',
             'all' => 'All',
+            'period' => 'Period',
+            'period_all' => 'All dates',
+            'period_from' => 'From',
+            'period_to' => 'To',
             'exported_at' => 'Exported at',
             'count' => 'Count',
         ];
@@ -147,11 +156,32 @@ final class LeadExcelExportService
             'title' => 'طلبات العملاء ركيزة',
             'status' => 'الحالة',
             'all' => 'الكل',
+            'period' => 'الفترة',
+            'period_all' => 'كل التواريخ',
+            'period_from' => 'من',
+            'period_to' => 'إلى',
             'exported_at' => 'تاريخ التصدير',
             'count' => 'العدد',
         ];
 
         return ($locale === AppLocale::ENGLISH ? $english : $arabic)[$key];
+    }
+
+    private function periodLabel(string $locale, ?string $from, ?string $to): string
+    {
+        if (! filled($from) && ! filled($to)) {
+            return $this->copy('period', $locale).': '.$this->copy('period_all', $locale);
+        }
+
+        if (filled($from) && filled($to)) {
+            return $this->copy('period', $locale).': '.$from.' → '.$to;
+        }
+
+        if (filled($from)) {
+            return $this->copy('period', $locale).': '.$this->copy('period_from', $locale).' '.$from;
+        }
+
+        return $this->copy('period', $locale).': '.$this->copy('period_to', $locale).' '.$to;
     }
 
     /**

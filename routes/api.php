@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CraftsmanController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LeadController;
 use App\Http\Controllers\Admin\PasswordController;
+use App\Http\Controllers\Admin\PrivacyPolicySectionController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SettingController;
@@ -26,6 +27,10 @@ Route::middleware('auth:sanctum')->prefix('admin')->group(function (): void {
 
     Route::apiResource('services', ServiceController::class)->names('admin.services');
     Route::post('services/{service}', [ServiceController::class, 'update']);
+
+    Route::apiResource('privacy-policy', PrivacyPolicySectionController::class)
+        ->parameters(['privacy-policy' => 'section'])
+        ->names('admin.privacy-policy');
 
     Route::apiResource('projects', ProjectController::class)->names('admin.projects');
     Route::post('projects/{project}', [ProjectController::class, 'update']);

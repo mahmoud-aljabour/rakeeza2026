@@ -7,15 +7,24 @@ use App\Http\Controllers\CraftsmanController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PrivacyPolicyController;
+use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/locale/{locale}', LocaleController::class)
     ->whereIn('locale', ['ar', 'en'])
     ->name('locale.switch');
 
+Route::get('/robots.txt', RobotsController::class)->name('robots');
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
 Route::get('/', LandingController::class)->name('landing');
-Route::get('/services/{service}', ServiceController::class)->name('services.show');
+Route::get('/privacy-policy', PrivacyPolicyController::class)->name('privacy');
+Route::get('/services/{service}', ServiceController::class)
+    ->where('service', '[A-Za-z0-9\-]+')
+    ->name('services.show');
 Route::post('/leads', [LeadController::class, 'store'])
     ->middleware('throttle:quote-requests')
     ->name('leads.store');

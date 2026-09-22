@@ -1,7 +1,16 @@
 @extends('layouts.site')
 
-@section('title', $service->displayTitle().' | '.config('app.name'))
+@section('title', $service->seoTitle())
 @section('body-class', 'service-page')
+
+@push('head')
+    @include('partials.seo-meta', [
+        'title' => $service->seoTitle(),
+        'description' => $service->metaDescription(),
+        'image' => $service->imageUrl(),
+    ])
+    @include('partials.json-ld', ['schema' => \App\Support\StructuredData::service($service, $site)])
+@endpush
 
 @section('content')
         <div class="service-shell">
@@ -16,12 +25,11 @@
 
                 <section class="service-intro">
                     <div class="service-intro-visual">
-                        <img src="{{ $service->imageUrl() }}" alt="{{ $service->displayTitle() }}">
-                       <!-- <span cl/ass="service-intro-bacdfkmkE[THHdge">خدمات ركيزة</span> --> 
+                        <img src="{{ $service->imageUrl() }}" alt="{{ $service->imageAlt() }}">
                     </div>
                     <div class="service-intro-copy">
                         <p class="service-kicker">{{ __('site.services.kicker') }}</p>
-                        <h1>{{ $service->displayTitle() }}</h1>
+                        <h1>{{ $service->pageHeading() }}</h1>
                         <p class="service-lead">{{ $service->displayDescription() }}</p>
                         <div class="service-facts">
                             <div class="service-fact">
@@ -54,6 +62,21 @@
                         </div>
                     </div>
                 </section>
+
+                @if ($service->bodyParagraphs() !== [])
+                    <article class="service-article">
+                        @foreach ($service->bodyParagraphs() as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                        @endforeach
+                        <div class="service-cta-row">
+                            <a href="#contact" class="btn-primary">
+                                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+                                {{ __('site.services.send_request') }}
+                            </a>
+                            <a href="{{ route('landing') }}" class="btn-ghost">{{ __('site.nav.home') }}</a>
+                        </div>
+                    </article>
+                @endif
             </div>
 
             <section class="service-works-band">
@@ -149,7 +172,7 @@
                 </section>
 
                 @php
-                    $related = $services->where('id', '!=', $service->id)->take(4);
+                    $related = $services->where('id', '!=', $service->id);
                 @endphp
                 @if ($related->isNotEmpty())
                     <section class="service-related">
@@ -160,7 +183,7 @@
                         <div class="service-related-grid">
                             @foreach ($related as $item)
                                 <a href="{{ route('services.show', $item) }}" class="service-related-card">
-                                    <img src="{{ $item->imageUrl() }}" alt="{{ $item->displayTitle() }}" loading="lazy" decoding="async">
+                                    <img src="{{ $item->imageUrl() }}" alt="{{ $item->imageAlt() }}" loading="lazy" decoding="async">
                                     <strong>{{ $item->displayTitle() }}</strong>
                                 </a>
                             @endforeach

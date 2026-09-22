@@ -23,10 +23,19 @@ final class LeadController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $status = LeadStatus::tryFrom((string) $request->query('status', ''));
-        $perPage = min(50, max(5, $request->integer('per_page', 10)));
+        $validated = $request->validate([
+            'status' => ['nullable', 'string'],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'per_page' => ['nullable', 'integer', 'min:5', 'max:50'],
+        ]);
 
-        return response()->json($this->leads->paginate($status, $perPage));
+        $status = LeadStatus::tryFrom((string) ($validated['status'] ?? ''));
+        $perPage = min(50, max(5, (int) ($validated['per_page'] ?? 10)));
+        $from = $validated['from'] ?? null;
+        $to = $validated['to'] ?? null;
+
+        return response()->json($this->leads->paginate($status, $perPage, $from, $to));
     }
 
     public function store(AdminStoreLeadRequest $request): JsonResponse
@@ -44,9 +53,22 @@ final class LeadController extends Controller
 
     public function export(Request $request): BinaryFileResponse
     {
-        $status = LeadStatus::tryFrom((string) $request->query('status', ''));
+        $validated = $request->validate([
+            'status' => ['nullable', 'string'],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ]);
 
-        return $this->excelExport->downloadList($this->leads->list($status), $status);
+        $status = LeadStatus::tryFrom((string) ($validated['status'] ?? ''));
+        $from = $validated['from'] ?? null;
+        $to = $validated['to'] ?? null;
+
+        return $this->excelExport->downloadList(
+            $this->leads->list($status, $from, $to),
+            $status,
+            $from,
+            $to,
+        );
     }
 
     public function update(UpdateLeadRequest $request, int $lead): JsonResponse

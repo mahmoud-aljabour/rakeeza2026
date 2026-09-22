@@ -15,6 +15,7 @@ final class CatalogSeeder extends Seeder
 {
     public function run(): void
     {
+        $pages = require database_path('data/service_pages.php');
         $catalog = require lang_path('en/catalog.php');
         $serviceCatalog = is_array($catalog['services'] ?? null) ? $catalog['services'] : [];
         $projectCatalog = is_array($catalog['projects'] ?? null) ? $catalog['projects'] : [];
@@ -58,12 +59,20 @@ final class CatalogSeeder extends Seeder
 
         foreach ($services as $service) {
             $english = $serviceCatalog[$service['title']] ?? [];
+            $page = is_array($pages[$service['title']] ?? null) ? $pages[$service['title']] : [];
 
             Service::query()->create([
                 'title' => $service['title'],
                 'title_en' => is_string($english['title'] ?? null) ? $english['title'] : null,
+                'slug' => is_string($page['slug'] ?? null) ? $page['slug'] : null,
                 'description' => $service['description'],
                 'description_en' => is_string($english['description'] ?? null) ? $english['description'] : null,
+                'body' => is_string($page['body'] ?? null) ? $page['body'] : null,
+                'body_en' => is_string($page['body_en'] ?? null) ? $page['body_en'] : null,
+                'seo_title' => is_string($page['seo_title'] ?? null) ? $page['seo_title'] : null,
+                'seo_title_en' => is_string($page['seo_title_en'] ?? null) ? $page['seo_title_en'] : null,
+                'meta_description' => is_string($page['meta_description'] ?? null) ? $page['meta_description'] : null,
+                'meta_description_en' => is_string($page['meta_description_en'] ?? null) ? $page['meta_description_en'] : null,
                 'image_path' => $service['image_path'],
                 'is_active' => true,
             ]);

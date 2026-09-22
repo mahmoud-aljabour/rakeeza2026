@@ -73,6 +73,67 @@ final class LeadAdminManualAndExportTest extends TestCase
             ->assertJsonCount(2, 'data');
     }
 
+    public function test_admin_can_filter_leads_by_date_range(): void
+    {
+        $user = User::factory()->create();
+
+        $inside = Lead::factory()->create([
+            'name' => 'طلب داخل الفترة',
+            'created_at' => '2026-09-15 10:00:00',
+        ]);
+        Lead::factory()->create([
+            'name' => 'طلب قبل الفترة',
+            'created_at' => '2026-08-20 10:00:00',
+        ]);
+        Lead::factory()->create([
+            'name' => 'طلب بعد الفترة',
+            'created_at' => '2026-10-05 10:00:00',
+        ]);
+
+        $this->actingAs($user)
+            ->getJson('/api/admin/leads?from=2026-09-01&to=2026-09-30')
+            ->assertOk()
+            ->assertJsonPath('total', 1)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $inside->id)
+            ->assertJsonPath('data.0.name', 'طلب داخل الفترة');
+    }
+
+    public function test_admin_rejects_invalid_lead_date_range(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->getJson('/api/admin/leads?from=2026-09-30&to=2026-09-01')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['to']);
+    }
+
+    public function test_admin_export_respects_lead_date_range(): void
+    {
+        $user = User::factory()->create();
+
+        Lead::factory()->create([
+            'name' => 'داخل الجرد',
+            'created_at' => '2026-09-12 08:00:00',
+        ]);
+        Lead::factory()->create([
+            'name' => 'خارج الجرد',
+            'created_at' => '2026-07-01 08:00:00',
+        ]);
+
+        $response = $this->actingAs($user)
+            ->withSession(['locale' => 'ar'])
+            ->get('/api/admin/leads/export?from=2026-09-01&to=2026-09-30')
+            ->assertOk();
+
+        $path = $this->storeExportedXlsx($this->exportedBinary($response));
+        $this->assertXlsxContains($path, 'داخل الجرد');
+        $this->assertXlsxContains($path, '2026-09-01 → 2026-09-30');
+        $this->assertXlsxDoesNotContain($path, 'خارج الجرد');
+        unlink($path);
+    }
+
     public function test_admin_can_export_leads_as_excel(): void
     {
         $user = User::factory()->create();

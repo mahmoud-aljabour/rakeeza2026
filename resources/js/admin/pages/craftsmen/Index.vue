@@ -518,13 +518,15 @@ onUnmounted(() => {
 
         <div class="admin-table-scroll rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-            <table class="w-full min-w-[64rem] text-start text-sm">
+            <table class="w-full min-w-[72rem] text-start text-sm">
 
                 <thead class="bg-slate-50 text-primary">
 
                     <tr>
 
                         <th class="px-4 py-3 font-extrabold">{{ t('name') }}</th>
+
+                        <th class="px-4 py-3 font-extrabold">{{ t('craftsmen.national_id') }}</th>
 
                         <th class="px-4 py-3 font-extrabold">{{ t('phone') }}</th>
 
@@ -551,6 +553,8 @@ onUnmounted(() => {
                     <tr v-for="item in craftsmen" :key="item.id" class="border-t border-slate-100">
 
                         <td class="px-4 py-3 font-bold">{{ item.name }}</td>
+
+                        <td class="px-4 py-3 whitespace-nowrap" dir="ltr">{{ item.national_id || '-' }}</td>
 
                         <td class="px-4 py-3" dir="ltr">{{ item.phone }}</td>
 
@@ -621,7 +625,7 @@ onUnmounted(() => {
 
                     <tr v-if="!craftsmen.length">
 
-                        <td colspan="9" class="px-4 py-8 text-center text-slate-400">{{ t('craftsmen.empty') }}</td>
+                        <td colspan="10" class="px-4 py-8 text-center text-slate-400">{{ t('craftsmen.empty') }}</td>
 
                     </tr>
 
@@ -767,6 +771,14 @@ onUnmounted(() => {
                 </div>
 
                 <dl class="space-y-3 text-sm">
+
+                    <div>
+
+                        <dt class="font-extrabold text-primary">{{ t('craftsmen.national_id') }}</dt>
+
+                        <dd class="text-slate-600" dir="ltr">{{ selectedCraftsman.national_id || '-' }}</dd>
+
+                    </div>
 
                     <div>
 
