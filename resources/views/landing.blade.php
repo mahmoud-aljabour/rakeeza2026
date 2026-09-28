@@ -9,8 +9,8 @@
         'image' => asset('images/logo.png'),
         'url' => route('landing'),
     ])
-    @include('partials.json-ld', ['schema' => \App\Support\StructuredData::localBusiness($site)])
-    <link rel="preload" as="image" href="{{ asset('images/hero-bg-3.jpg') }}">
+    @include('partials.json-ld', ['schema' => \App\Support\StructuredData::home($site)])
+    <link rel="preload" as="image" href="{{ asset('images/hero-bg-3.jpg') }}" fetchpriority="high">
 @endpush
 
 @section('content')

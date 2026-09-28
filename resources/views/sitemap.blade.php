@@ -3,7 +3,9 @@
 @foreach ($entries as $entry)
     <url>
         <loc>{{ $entry['loc'] }}</loc>
-        <lastmod>{{ $entry['lastmod'] }}</lastmod>
+        @if ($entry['lastmod'] !== null)
+            <lastmod>{{ $entry['lastmod'] }}</lastmod>
+        @endif
     </url>
 @endforeach
 </urlset>

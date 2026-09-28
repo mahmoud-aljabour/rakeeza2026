@@ -34,15 +34,26 @@ return [
     ],
 
     'meta' => [
-        'landing_title' => 'Rakeeza | Home and facility services in Gaza',
-        'landing_description' => 'Rakeeza delivers home and facility services in Gaza: cleaning, debris removal, maintenance, health and safety, and interior design. Send your request today.',
+        'landing_title' => 'Rakeeza | Cleaning, maintenance, and debris removal in Gaza',
+        'landing_description' => 'Rakeeza delivers field services in the Gaza Strip: cleaning, debris removal, maintenance, and site setup for families and organizations. Request service now.',
         'craftsman_title' => 'Craftsman registration | :app',
+        'craftsman_description' => 'Register as a craftsman with Rakeeza for cleaning, maintenance, and debris removal across the Gaza Strip. Send your details and we will contact you soon.',
         'privacy_title' => 'Privacy policy | Rakeeza',
         'privacy_description' => 'Rakeeza privacy policy explains the data we collect for requests and registration, how we use and protect it, and your right to review, correct, or delete it.',
     ],
 
     'hero' => [
         'cta' => 'Contact us to request a service',
+    ],
+
+    'not_found' => [
+        'title' => 'Page not found | Rakeeza',
+        'kicker' => 'Error 404',
+        'heading' => 'We could not find that page',
+        'text' => 'The link may have changed or the page was removed. Go back home or pick one of our field services in the Gaza Strip.',
+        'home' => 'Back to home',
+        'contact' => 'Contact us',
+        'services_title' => 'Our services in the Gaza Strip',
     ],
 
     'features' => [
@@ -67,6 +78,10 @@ return [
         'title' => 'Our complete services',
         'details' => 'View details',
         'kicker' => 'Service details',
+        'about_title' => 'How we carry out the work',
+        'about_hint' => 'From the first visit to handover, in a clear order that fits the site.',
+        'read_more' => 'Show more',
+        'read_less' => 'Show less',
         'projects_count' => 'Completed projects',
         'fast' => 'Fast',
         'fast_text' => 'High-quality delivery',
@@ -76,17 +91,22 @@ return [
         'whatsapp_quote_message' => 'Hello Rakeeza, I would like a quote for: :service',
         'send_request' => 'Send your request here',
         'page_heading' => ':service in the Gaza Strip',
-        'default_seo_title' => ':service in Gaza | :brand',
-        'image_alt' => ':service in Gaza - :brand',
+        'default_seo_title' => ':service | :brand',
+        'image_alt' => ':service in the Gaza Strip - Rakeeza',
+        'project_image_alt' => ':title - Rakeeza',
+        'project_image_alt_numbered' => ':title - photo :index - Rakeeza',
+        'project_fallback_title' => ':service project',
         'works_kicker' => 'Project gallery',
         'works_title' => 'Completed projects',
         'empty_projects' => 'No projects are listed for this service yet.',
         'quote_kicker' => 'Direct contact',
         'quote_title' => 'Request a quote',
         'quote_text' => 'Tell us what you need and the request will appear directly in the Rakeeza team dashboard.',
-        'related_kicker' => 'Browse more',
-        'related_title' => 'Other services',
+        'related_kicker' => 'More from Rakeeza',
+        'related_title' => 'Other field services we offer in Gaza',
+        'related_cta' => 'Service details',
         'crumb' => 'Breadcrumb',
+        'crumb_services' => 'Services',
         'more_projects' => 'See our latest work',
     ],
 
@@ -243,8 +263,9 @@ return [
     'photos' => '{1} :count photo|[2,*] :count photos',
 
     'schema' => [
-        'business_description' => 'Home and facility services',
-        'area' => 'Gaza Strip',
+        'business_name' => 'منصة ركيزة - Rakeeza',
+        'business_description' => 'Rakeeza provides field services across the Gaza Strip, including home and facility cleaning, debris removal, general maintenance, and site preparation for organizations and individuals.',
+        'area' => 'Gaza Strip, Palestine',
     ],
 
     'why_photo_alt' => 'Engineering planning and professional execution',

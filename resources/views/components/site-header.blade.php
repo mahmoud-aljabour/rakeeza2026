@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<header>
+<header class="site-header">
     <div class="nav-container">
         <div class="logo-area">
             <a href="{{ $logoHref }}" aria-label="{{ __('site.brand_full') }}">

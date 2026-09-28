@@ -2,6 +2,15 @@
 
 @section('title', __('site.meta.craftsman_title', ['app' => config('app.name')]))
 
+@push('head')
+    @include('partials.seo-meta', [
+        'title' => __('site.meta.craftsman_title', ['app' => config('app.name')]),
+        'description' => __('site.meta.craftsman_description'),
+        'image' => asset('images/craftsman.jpg'),
+        'url' => route('craftsman.create'),
+    ])
+@endpush
+
 @section('content')
         <section class="page-hero" data-nav-bg="dark">
             <div class="page-hero-bg" style="background-image: url('{{ asset('images/craftsman.jpg') }}');"></div>

@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 #[Fillable([
@@ -39,6 +40,8 @@ class Service extends Model
     /** @use HasFactory<ServiceFactory> */
     use HasFactory;
 
+    public const ACTIVE_CACHE_KEY = 'rakeeza.services.active';
+
     public function getRouteKeyName(): string
     {
         return 'slug';
@@ -46,6 +49,9 @@ class Service extends Model
 
     protected static function booted(): void
     {
+        static::saved(static fn (): bool => Cache::forget(self::ACTIVE_CACHE_KEY));
+        static::deleted(static fn (): bool => Cache::forget(self::ACTIVE_CACHE_KEY));
+
         static::saving(function (Service $service): void {
             if (filled($service->slug)) {
                 return;
@@ -110,9 +116,14 @@ class Service extends Model
     }
 
     /**
-     * @return list<string>
+     * Paragraphs, headings, and lists from the long service text.
+     *
+     * A line that starts with ## becomes an h2 and ### becomes an h3.
+     * Consecutive lines that start with "- " or "• " become one list.
+     *
+     * @return list<array{tag: 'h2'|'h3'|'p', text: string}|array{tag: 'ul', items: list<string>}>
      */
-    public function bodyParagraphs(): array
+    public function bodyBlocks(): array
     {
         $body = trim($this->displayBody());
 
@@ -120,12 +131,63 @@ class Service extends Model
             return [];
         }
 
-        $parts = preg_split("/\R\s*\R/u", $body) ?: [];
+        $blocks = [];
+        $paragraph = [];
+        $items = [];
 
-        return array_values(array_filter(
-            array_map(trim(...), $parts),
-            fn (string $paragraph): bool => $paragraph !== '',
-        ));
+        $flush = function () use (&$blocks, &$paragraph, &$items): void {
+            $text = trim(implode("\n", $paragraph));
+            $paragraph = [];
+
+            if ($text !== '') {
+                $blocks[] = ['tag' => 'p', 'text' => $text];
+            }
+
+            if ($items !== []) {
+                $blocks[] = ['tag' => 'ul', 'items' => $items];
+                $items = [];
+            }
+        };
+
+        foreach (preg_split("/\R/u", $body) ?: [] as $line) {
+            $line = trim($line);
+
+            if (preg_match('/^(#{2,3})(?!#)\s+(\S.*)$/u', $line, $matches) === 1) {
+                $flush();
+                $blocks[] = [
+                    'tag' => strlen($matches[1]) === 2 ? 'h2' : 'h3',
+                    'text' => trim($matches[2]),
+                ];
+
+                continue;
+            }
+
+            if (preg_match('/^[-•]\s+(\S.*)$/u', $line, $matches) === 1) {
+                if ($paragraph !== []) {
+                    $flush();
+                }
+
+                $items[] = trim($matches[1]);
+
+                continue;
+            }
+
+            if ($line === '') {
+                $flush();
+
+                continue;
+            }
+
+            if ($items !== []) {
+                $flush();
+            }
+
+            $paragraph[] = $line;
+        }
+
+        $flush();
+
+        return $blocks;
     }
 
     public function pageHeading(): string
@@ -170,8 +232,12 @@ class Service extends Model
     {
         return __('site.services.image_alt', [
             'service' => $this->displayTitle(),
-            'brand' => __('site.brand'),
         ]);
+    }
+
+    public function snippet(int $limit = 120): string
+    {
+        return Str::limit(trim($this->displayDescription()), $limit);
     }
 
     private function localized(?string $arabic, ?string $english): string

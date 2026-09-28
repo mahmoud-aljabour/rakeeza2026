@@ -29,10 +29,15 @@ final class ServiceController extends Controller
             'projects' => static fn ($query) => $query->ordered(),
         ]);
 
+        $services = $serviceService->listActive();
+
         return view('service', [
             'service' => $service,
             'projects' => $service->projects,
-            'services' => $serviceService->listActive(),
+            'services' => $services,
+            'relatedServices' => $services->reject(
+                static fn (Service $item): bool => $item->is($service),
+            )->values(),
             'site' => $settingService->publicSite(),
         ]);
     }

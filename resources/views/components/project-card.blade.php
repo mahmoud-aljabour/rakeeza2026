@@ -7,7 +7,7 @@
     class="project-card"
     data-lightbox="{{ json_encode($project->lightboxPayload(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) }}"
 >
-    <img src="{{ $project->imageUrl() }}" alt="{{ $title }}" loading="lazy" decoding="async" data-project-image>
+    <img src="{{ $project->imageUrl() }}" alt="{{ $project->imageAlt() }}" loading="lazy" decoding="async" data-project-image>
     @if ($imageCount > 1)
         <span class="project-photo-count">{{ trans_choice('site.photos', $imageCount, ['count' => $imageCount]) }}</span>
     @endif

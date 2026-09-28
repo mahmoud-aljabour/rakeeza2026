@@ -79,6 +79,23 @@ class Project extends Model
         );
     }
 
+    public function imageAlt(?string $serviceName = null, ?int $index = null): string
+    {
+        $title = trim($this->displayTitle());
+
+        if ($title === '') {
+            $title = __('site.services.project_fallback_title', [
+                'service' => $serviceName ?? __('site.brand'),
+            ]);
+        }
+
+        if ($index !== null && $index > 1) {
+            return __('site.services.project_image_alt_numbered', ['title' => $title, 'index' => $index]);
+        }
+
+        return __('site.services.project_image_alt', ['title' => $title]);
+    }
+
     public function displayDetails(): string
     {
         return TranslatesCatalog::text(

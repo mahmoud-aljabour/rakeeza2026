@@ -8,7 +8,6 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PrivacyPolicyController;
-use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
@@ -17,7 +16,6 @@ Route::get('/locale/{locale}', LocaleController::class)
     ->whereIn('locale', ['ar', 'en'])
     ->name('locale.switch');
 
-Route::get('/robots.txt', RobotsController::class)->name('robots');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 Route::get('/', LandingController::class)->name('landing');
@@ -34,11 +32,13 @@ Route::post('/craftsman', [CraftsmanController::class, 'store'])
     ->middleware('throttle:quote-requests')
     ->name('craftsman.store');
 
-Route::post('/login', [AuthController::class, 'login'])
-    ->middleware('throttle:admin-login')
-    ->name('login');
-Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+Route::middleware('noindex')->group(function (): void {
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:admin-login')
+        ->name('login');
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-Route::view('/admin/{any?}', 'admin')
-    ->where('any', '.*')
-    ->name('admin');
+    Route::view('/admin/{any?}', 'admin')
+        ->where('any', '.*')
+        ->name('admin');
+});

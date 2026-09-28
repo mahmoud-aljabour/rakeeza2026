@@ -9,45 +9,34 @@ use App\Models\Service;
 final class StructuredData
 {
     /**
+     * LocalBusiness and WebSite for the homepage.
+     *
      * @param  array<string, string>  $site
      * @return array<string, mixed>
      */
-    public static function localBusiness(array $site): array
+    public static function home(array $site): array
     {
         return [
             '@context' => 'https://schema.org',
-            '@type' => 'LocalBusiness',
-            'name' => __('site.brand'),
-            'description' => __('site.schema.business_description'),
-            'url' => route('landing'),
-            'image' => asset('images/logo.png'),
-            'telephone' => $site['phone'],
-            'email' => $site['email'],
-            'areaServed' => self::areaServed(),
+            '@graph' => [
+                self::localBusiness($site),
+                self::website(),
+            ],
         ];
     }
 
     /**
-     * @param  array<string, string>  $site
+     * Service and BreadcrumbList for a public service page.
+     *
      * @return array<string, mixed>
      */
-    public static function service(Service $service, array $site): array
+    public static function service(Service $service): array
     {
         return [
             '@context' => 'https://schema.org',
-            '@type' => 'Service',
-            'name' => $service->displayTitle(),
-            'serviceType' => $service->displayTitle(),
-            'description' => $service->metaDescription(),
-            'url' => route('services.show', $service),
-            'image' => $service->imageUrl(),
-            'areaServed' => self::areaServed(),
-            'provider' => [
-                '@type' => 'LocalBusiness',
-                'name' => __('site.brand'),
-                'telephone' => $site['phone'],
-                'email' => $site['email'],
-                'areaServed' => self::areaServed(),
+            '@graph' => [
+                self::serviceNode($service),
+                self::breadcrumbs($service),
             ],
         ];
     }
@@ -64,9 +53,7 @@ final class StructuredData
             'description' => $description,
             'url' => $url,
             'isPartOf' => [
-                '@type' => 'WebSite',
-                'name' => __('site.brand'),
-                'url' => route('landing'),
+                '@id' => self::publicUrl().'/#website',
             ],
         ];
     }
@@ -83,13 +70,177 @@ final class StructuredData
     }
 
     /**
+     * @param  array<string, string>  $site
+     * @return array<string, mixed>
+     */
+    private static function localBusiness(array $site): array
+    {
+        $business = [
+            '@type' => 'LocalBusiness',
+            '@id' => self::publicUrl().'/#business',
+            'name' => __('site.schema.business_name'),
+            'url' => self::publicUrl(),
+            'logo' => self::publicUrl().'/images/logo.png',
+            'description' => __('site.schema.business_description'),
+            'address' => [
+                '@type' => 'PostalAddress',
+                'addressLocality' => 'Gaza',
+                'addressRegion' => 'Gaza Strip',
+                'addressCountry' => 'PS',
+            ],
+            'areaServed' => self::areaServed(),
+        ];
+
+        return self::withContact($business, $site);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function website(): array
+    {
+        return [
+            '@type' => 'WebSite',
+            '@id' => self::publicUrl().'/#website',
+            'name' => __('site.schema.business_name'),
+            'url' => self::publicUrl(),
+            'publisher' => [
+                '@id' => self::publicUrl().'/#business',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function serviceNode(Service $service): array
+    {
+        return [
+            '@type' => 'Service',
+            'name' => self::serviceName($service),
+            'description' => $service->metaDescription(),
+            'url' => url()->current(),
+            'provider' => [
+                '@type' => 'LocalBusiness',
+                '@id' => self::publicUrl().'/#business',
+                'name' => __('site.schema.business_name'),
+                'url' => self::publicUrl(),
+            ],
+            'areaServed' => self::areaServed(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function breadcrumbs(Service $service): array
+    {
+        return [
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => [
+                [
+                    '@type' => 'ListItem',
+                    'position' => 1,
+                    'name' => __('site.nav.home'),
+                    'item' => self::publicUrl(),
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 2,
+                    'name' => __('site.services.crumb_services'),
+                    'item' => self::publicUrl().'/#services',
+                ],
+                [
+                    '@type' => 'ListItem',
+                    'position' => 3,
+                    'name' => $service->displayTitle(),
+                    'item' => url()->current(),
+                ],
+            ],
+        ];
+    }
+
+    private static function serviceName(Service $service): string
+    {
+        $english = trim((string) $service->seo_title_en);
+        $arabic = trim((string) $service->seo_title);
+
+        if (AppLocale::current() === AppLocale::ENGLISH && $english !== '') {
+            return $english;
+        }
+
+        if ($arabic !== '') {
+            return $arabic;
+        }
+
+        return $service->displayTitle();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, string>  $site
+     * @return array<string, mixed>
+     */
+    private static function withContact(array $data, array $site): array
+    {
+        $phone = trim((string) ($site['phone'] ?? ''));
+        $email = trim((string) ($site['email'] ?? ''));
+
+        if ($phone !== '') {
+            $data['telephone'] = $phone;
+        }
+
+        if ($email !== '') {
+            $data['email'] = $email;
+        }
+
+        $sameAs = self::sameAs($site);
+
+        if ($sameAs !== []) {
+            $data['sameAs'] = $sameAs;
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, string>  $site
+     * @return list<string>
+     */
+    private static function sameAs(array $site): array
+    {
+        /** @var list<string> $configured */
+        $configured = config('rakeeza.social', []);
+        $links = [];
+
+        foreach ($configured as $url) {
+            if (is_string($url) && $url !== '') {
+                $links[] = $url;
+            }
+        }
+
+        $whatsapp = preg_replace('/\D+/', '', (string) ($site['whatsapp'] ?? '')) ?? '';
+
+        if ($whatsapp !== '') {
+            $links[] = 'https://wa.me/'.$whatsapp;
+        }
+
+        return array_values(array_unique($links));
+    }
+
+    /**
      * @return array{ '@type': string, name: string }
      */
     private static function areaServed(): array
     {
         return [
-            '@type' => 'AdministrativeArea',
+            '@type' => 'Place',
             'name' => __('site.schema.area'),
         ];
+    }
+
+    private static function publicUrl(): string
+    {
+        return rtrim((string) config('rakeeza.public_url'), '/');
     }
 }

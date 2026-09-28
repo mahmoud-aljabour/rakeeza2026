@@ -38,6 +38,13 @@ return [
 
     'leads_notify_email' => env('LEADS_NOTIFY_EMAIL', 'info@rakeeza-ps.com'),
 
+    'public_url' => 'https://rakeeza-ps.com',
+
+    'social' => array_values(array_filter(
+        array_map(trim(...), explode(',', (string) env('RAKEEZA_SOCIAL_URLS', ''))),
+        static fn (string $url): bool => $url !== '',
+    )),
+
     'locales' => ['ar', 'en'],
 
     'default_locale' => 'ar',

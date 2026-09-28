@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex, nofollow">
         <meta name="theme-color" content="#0a3356">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name') }} - {{ __('site.admin_title') }}</title>

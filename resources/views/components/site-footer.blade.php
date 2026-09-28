@@ -9,7 +9,7 @@
     <div class="footer-grid">
         <div class="footer-about">
             <a href="{{ $logoHref }}" class="footer-logo" aria-label="{{ __('site.brand_full') }}">
-                <img src="{{ asset('images/logo.png') }}" alt="{{ __('site.brand_full') }}" width="120" height="64" decoding="async">
+                <img src="{{ asset('images/logo.png') }}" alt="{{ __('site.brand_full') }}" width="120" height="64" loading="lazy" decoding="async">
             </a>
             <p>{{ $site['footer_about'] }}</p>
         </div>

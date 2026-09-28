@@ -8,17 +8,50 @@ use App\Models\Service;
 use App\Scopes\ActiveScope;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
 
 final class ServiceService
 {
     /**
+     * Columns the public header, footer, cards, forms, and sitemap read.
+     *
+     * @var list<string>
+     */
+    private const PUBLIC_COLUMNS = [
+        'id',
+        'title',
+        'title_en',
+        'slug',
+        'description',
+        'description_en',
+        'image_path',
+        'projects_count',
+        'is_active',
+        'updated_at',
+    ];
+
+    /**
      * Public catalog: only active services (global scope applied).
+     *
+     * Rows are cached as plain arrays because the cache store refuses to unserialize objects.
      *
      * @return Collection<int, Service>
      */
     public function listActive(): Collection
     {
-        return Service::query()->orderBy('id')->get();
+        $rows = once(fn (): array => Cache::remember(
+            Service::ACTIVE_CACHE_KEY,
+            now()->addDay(),
+            fn (): array => Service::query()
+                ->select(self::PUBLIC_COLUMNS)
+                ->orderBy('id')
+                ->toBase()
+                ->get()
+                ->map(static fn (object $row): array => (array) $row)
+                ->all(),
+        ));
+
+        return Service::hydrate($rows);
     }
 
     /**

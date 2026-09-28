@@ -1,5 +1,5 @@
 (function () {
-            var header = document.querySelector('header');
+            var header = document.querySelector('header.site-header');
             var toggle = document.querySelector('.menu-toggle');
             var overlay = document.getElementById('nav-overlay');
             var links = document.querySelectorAll('#main-nav a');
@@ -107,7 +107,7 @@
         })();
 
         (function () {
-            var header = document.querySelector('header');
+            var header = document.querySelector('header.site-header');
             if (!header) return;
 
             function updateNavTheme() {
@@ -131,6 +131,33 @@
             window.addEventListener('resize', requestThemeUpdate);
             window.addEventListener('nav-theme-refresh', requestThemeUpdate);
             updateNavTheme();
+        })();
+
+        (function () {
+            var body = document.querySelector('[data-collapsible]');
+            if (!body) return;
+
+            var text = body.querySelector('.service-article-text');
+            var toggle = body.querySelector('.service-article-toggle');
+            if (!text || !toggle) return;
+
+            var label = toggle.querySelector('span');
+
+            if (text.scrollHeight <= text.clientHeight + 1) {
+                body.classList.remove('is-collapsed');
+                toggle.hidden = true;
+                return;
+            }
+
+            toggle.addEventListener('click', function () {
+                var collapsed = body.classList.toggle('is-collapsed');
+                toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+                label.textContent = collapsed ? toggle.dataset.moreLabel : toggle.dataset.lessLabel;
+
+                if (collapsed && body.getBoundingClientRect().top < 0) {
+                    body.closest('.service-article').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
         })();
 
         (function () {

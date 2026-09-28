@@ -26,6 +26,9 @@ final class SitemapController extends Controller
         ], [
             'loc' => route('privacy'),
             'lastmod' => $privacyLatest > 0 ? date(DATE_ATOM, $privacyLatest) : now()->toAtomString(),
+        ], [
+            'loc' => route('craftsman.create'),
+            'lastmod' => null,
         ]];
 
         foreach ($active as $service) {

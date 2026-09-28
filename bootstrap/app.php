@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AddNoIndexHeader;
 use App\Http\Middleware\EnsureFirstPartyApiOrigin;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->statefulApi();
         $middleware->api(prepend: [
+            AddNoIndexHeader::class,
             EnsureFirstPartyApiOrigin::class,
         ]);
         $middleware->api(append: [
@@ -30,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->alias([
+            'noindex' => AddNoIndexHeader::class,
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,

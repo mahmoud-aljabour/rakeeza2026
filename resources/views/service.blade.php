@@ -9,23 +9,23 @@
         'description' => $service->metaDescription(),
         'image' => $service->imageUrl(),
     ])
-    @include('partials.json-ld', ['schema' => \App\Support\StructuredData::service($service, $site)])
+    @include('partials.json-ld', ['schema' => \App\Support\StructuredData::service($service)])
 @endpush
 
 @section('content')
         <div class="service-shell">
             <div class="container">
                 <nav class="service-crumb" aria-label="{{ __('site.services.crumb') }}">
-                    <a href="{{ route('landing') }}">{{ __('site.nav.home') }}</a>
-                    <span aria-hidden="true">/</span>
-                    <a href="{{ url('/#services') }}">{{ __('site.nav.services') }}</a>
-                    <span aria-hidden="true">/</span>
-                    <span>{{ $service->displayTitle() }}</span>
+                    <ol>
+                        <li><a href="{{ route('landing') }}">{{ __('site.nav.home') }}</a></li>
+                        <li><a href="{{ url('/#services') }}">{{ __('site.services.crumb_services') }}</a></li>
+                        <li><span aria-current="page">{{ $service->displayTitle() }}</span></li>
+                    </ol>
                 </nav>
 
                 <section class="service-intro">
                     <div class="service-intro-visual">
-                        <img src="{{ $service->imageUrl() }}" alt="{{ $service->imageAlt() }}">
+                        <img src="{{ $service->imageUrl() }}" alt="{{ $service->imageAlt() }}" fetchpriority="high" decoding="async">
                     </div>
                     <div class="service-intro-copy">
                         <p class="service-kicker">{{ __('site.services.kicker') }}</p>
@@ -56,24 +56,48 @@
                                 {{ __('site.services.request_quote') }}
                             </a>
                             <a href="#contact" class="btn-ghost">
-                                <i class="fa-solid fa-paper-plane"></i>
+                                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
                                 {{ __('site.services.send_request') }}
                             </a>
                         </div>
                     </div>
                 </section>
 
-                @if ($service->bodyParagraphs() !== [])
+                @if ($service->bodyBlocks() !== [])
                     <article class="service-article">
-                        @foreach ($service->bodyParagraphs() as $paragraph)
-                            <p>{{ $paragraph }}</p>
-                        @endforeach
-                        <div class="service-cta-row">
-                            <a href="#contact" class="btn-primary">
-                                <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
-                                {{ __('site.services.send_request') }}
-                            </a>
-                            <a href="{{ route('landing') }}" class="btn-ghost">{{ __('site.nav.home') }}</a>
+                        <div class="service-article-head">
+                            <h2>{{ __('site.services.about_title') }}</h2>
+                            <p>{{ __('site.services.about_hint') }}</p>
+                        </div>
+                        <div class="service-article-body is-collapsed" data-collapsible>
+                            <div class="service-article-text" id="service-article-text">
+                                @foreach ($service->bodyBlocks() as $block)
+                                    @if ($block['tag'] === 'h2')
+                                        <h2>{{ $block['text'] }}</h2>
+                                    @elseif ($block['tag'] === 'h3')
+                                        <h3>{{ $block['text'] }}</h3>
+                                    @elseif ($block['tag'] === 'ul')
+                                        <ul>
+                                            @foreach ($block['items'] as $item)
+                                                <li>{{ $item }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <p>{{ $block['text'] }}</p>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <button
+                                type="button"
+                                class="service-article-toggle"
+                                aria-expanded="false"
+                                aria-controls="service-article-text"
+                                data-more-label="{{ __('site.services.read_more') }}"
+                                data-less-label="{{ __('site.services.read_less') }}"
+                            >
+                                <span>{{ __('site.services.read_more') }}</span>
+                                <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+                            </button>
                         </div>
                     </article>
                 @endif
@@ -88,7 +112,7 @@
 
                     <div class="service-works-list">
                         @forelse ($projects as $project)
-                            <x-service-work :project="$project" :index="$loop->iteration" />
+                            <x-service-work :project="$project" :index="$loop->iteration" :service-name="$service->displayTitle()" />
                         @empty
                             <div class="empty-projects">
                                 <i class="fa-solid fa-images" aria-hidden="true"></i>
@@ -171,23 +195,31 @@
                     </form>
                 </section>
 
-                @php
-                    $related = $services->where('id', '!=', $service->id);
-                @endphp
-                @if ($related->isNotEmpty())
-                    <section class="service-related">
+                @if ($relatedServices->isNotEmpty())
+                    <section class="service-related" aria-labelledby="service-related-title">
                         <div class="service-works-heading">
                             <p class="service-kicker">{{ __('site.services.related_kicker') }}</p>
-                            <h2>{{ __('site.services.related_title') }}</h2>
+                            <h2 id="service-related-title">{{ __('site.services.related_title') }}</h2>
                         </div>
-                        <div class="service-related-grid">
-                            @foreach ($related as $item)
-                                <a href="{{ route('services.show', $item) }}" class="service-related-card">
-                                    <img src="{{ $item->imageUrl() }}" alt="{{ $item->imageAlt() }}" loading="lazy" decoding="async">
-                                    <strong>{{ $item->displayTitle() }}</strong>
-                                </a>
+                        <ul class="service-related-grid">
+                            @foreach ($relatedServices as $item)
+                                <li class="service-related-card">
+                                    <a href="{{ route('services.show', $item) }}" class="service-related-media" tabindex="-1" aria-hidden="true">
+                                        <img src="{{ $item->imageUrl() }}" alt="{{ $item->imageAlt() }}" loading="lazy" decoding="async">
+                                    </a>
+                                    <div class="service-related-body">
+                                        <h3><a href="{{ route('services.show', $item) }}">{{ $item->displayTitle() }}</a></h3>
+                                        @if ($item->snippet() !== '')
+                                            <p>{{ $item->snippet() }}</p>
+                                        @endif
+                                        <a href="{{ route('services.show', $item) }}" class="service-related-link">
+                                            {{ __('site.services.related_cta') }}
+                                            <i class="fa-solid {{ \App\Support\AppLocale::isRtl() ? 'fa-arrow-left' : 'fa-arrow-right' }}" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
+                                </li>
                             @endforeach
-                        </div>
+                        </ul>
                     </section>
                 @endif
             </div>

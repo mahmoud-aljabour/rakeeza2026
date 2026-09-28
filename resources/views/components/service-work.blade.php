@@ -1,9 +1,10 @@
-@props(['project', 'index' => 1])
+@props(['project', 'index' => 1, 'serviceName' => null])
 
 @php
     $projectImages = $project->imageUrls();
     $imageCount = count($projectImages);
     $title = $project->displayTitle();
+    $imageAlt = $project->imageAlt($serviceName);
     $lightbox = json_encode($project->lightboxPayload(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     $isRtl = \App\Support\AppLocale::isRtl();
 @endphp
@@ -18,7 +19,7 @@
                 data-lightbox-index="0"
                 aria-label="{{ __('site.lightbox.view_photos', ['title' => $title]) }}"
             >
-                <img src="{{ $project->imageUrl() }}" alt="{{ $title }}" loading="lazy" decoding="async" data-work-image>
+                <img src="{{ $project->imageUrl() }}" alt="{{ $imageAlt }}" loading="lazy" decoding="async" data-work-image>
                 @if ($imageCount > 1)
                     <span class="project-photo-count" data-work-count>{{ trans_choice('site.photos', $imageCount, ['count' => $imageCount]) }}</span>
                 @endif
@@ -42,7 +43,7 @@
                         data-lightbox-index="{{ $imageIndex }}"
                         aria-label="{{ __('site.lightbox.view_photo_of', ['index' => $imageIndex + 1, 'title' => $title]) }}"
                     >
-                        <img src="{{ $imageUrl }}" alt="" loading="lazy" decoding="async">
+                        <img src="{{ $imageUrl }}" alt="{{ $project->imageAlt($serviceName, $imageIndex + 1) }}" loading="lazy" decoding="async">
                     </button>
                 @endforeach
             </div>
